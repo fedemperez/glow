@@ -1,51 +1,39 @@
 use std::sync::mpsc::TryIter;
-use std::{future::Future, sync::Arc};
-use crate::game::Chunk;
-use crate::game::ChunkCoords;
+use super::{ClientEvent, ServerEvent};
 use anyhow::Result;
 use anyhow::anyhow;
 use std::sync::Mutex;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
-use tokio::sync::RwLock;
-
-pub enum PlayerEvent {
-    Disconnect(String),
-}
-
-pub enum GameEvent {
-    LoadChunk(ChunkCoords, Arc<RwLock<Chunk>>),
-    KeepAlive(u64),
-}
 
 pub struct PlayerConnection {
-    receiver: Mutex<Receiver<PlayerEvent>>,
-    sender: UnboundedSender<GameEvent>,
+    receiver: Mutex<Receiver<ClientEvent>>,
+    sender: UnboundedSender<ServerEvent>,
 }
 
 impl PlayerConnection {
-    pub fn send(&self, ev: GameEvent) -> Result<()> {
+    pub fn send(&self, ev: ServerEvent) -> Result<()> {
         self.sender.send(ev).map_err(|e| {
             anyhow!("Tried to send game event to a closed connection")
         })
     }
 
-    pub fn get_sender(&self) -> UnboundedSender<GameEvent> {
+    pub fn get_sender(&self) -> UnboundedSender<ServerEvent> {
         self.sender.clone()
     }
 
-    pub fn receive(&mut self) -> TryIter<'_, PlayerEvent> {
+    pub fn receive(&mut self) -> TryIter<'_, ClientEvent> {
         self.receiver.get_mut().unwrap().try_iter()
     }
 }
 
 pub struct GameConnection {
-    receiver: UnboundedReceiver<GameEvent>,
-    sender: Sender<PlayerEvent>,
+    receiver: UnboundedReceiver<ServerEvent>,
+    sender: Sender<ClientEvent>,
 }
 
 impl GameConnection {
-    pub fn into_split(self) -> (UnboundedReceiver<GameEvent>, Sender<PlayerEvent>) 
+    pub fn into_split(self) -> (UnboundedReceiver<ServerEvent>, Sender<ClientEvent>) 
     {
         (self.receiver, self.sender)
     }

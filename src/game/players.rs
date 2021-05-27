@@ -2,10 +2,12 @@ use std::{collections::HashSet, time::Instant};
 
 use legion::*;
 use systems::{Builder, CommandBuffer};
-use crate::net::{GameEvent, PlayerEvent, PlayerConnection, Server};
+use crate::net::{ClientEvent, ServerEvent, PlayerConnection, Server};
 use nalgebra::Vector3;
 use super::chunks::{Chunk, ChunkCoords, ChunkWorld};
 use crate::util::get_time_millis;
+
+const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);
 
 #[derive(Clone, Copy, Debug, Default)]
 struct Position(Vector3<f32>);
@@ -53,16 +55,35 @@ impl ChunkRequester {
     }
 }
 
+#[system(for_each)]
+fn receive_events(entity: &Entity, conn: &mut PlayerConnection, 
+                name: &Name, cmd: &mut CommandBuffer) {
+    for event in conn.receive() {
+        match event {
+            ClientEvent::Disconnect(reason) => {
+                println!("{} disconnected, reason: {}", name.0, reason);
+                cmd.remove(*entity);
+            }
+        }
+    }
+}
+
 #[system]
 fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server) {
     for (name, conn) in server.get_new_players() {
+        conn.send(ServerEvent::PlayerPosition(SPAWN_POSITION));
         cmd.push((
-            Position::default(),
+            Position(SPAWN_POSITION),
             Name(name), 
             conn,
             ChunkRequester::new(8),
         ));
     }
+}
+
+#[system(for_each)]
+fn keepalive(conn: &PlayerConnection) {
+    conn.send(ServerEvent::KeepAlive(get_time_millis()));
 }
 
 #[system(for_each)]
@@ -76,29 +97,11 @@ fn send_chunks(pos: &Position, requester: &mut ChunkRequester,
         tokio::spawn(async move {
             match future.await {
                 Ok(chunk) => {
-                    sender.send(GameEvent::LoadChunk(coords, chunk));
+                    sender.send(ServerEvent::LoadChunk(coords, chunk));
                 }
                 Err(e) => eprintln!("Error loading chunk: {:?}", e),
             }
         });
-    }
-}
-
-#[system(for_each)]
-fn keepalive(conn: &PlayerConnection) {
-    conn.send(GameEvent::KeepAlive(get_time_millis()));
-}
-
-#[system(for_each)]
-fn receive_events(entity: &Entity, conn: &mut PlayerConnection, 
-                name: &Name, cmd: &mut CommandBuffer) {
-    for event in conn.receive() {
-        match event {
-            PlayerEvent::Disconnect(reason) => {
-                println!("{} disconnected :(, reason: {}", name.0, reason);
-                cmd.remove(*entity);
-            }
-        }
     }
 }
 
