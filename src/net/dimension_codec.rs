@@ -1,4 +1,4 @@
-use nbt::{Blob, Value, Map};
+use nbt::{Value, Map};
 
 pub fn gen_dimension_codec() -> Value {
     let dimensions = gen_registry(

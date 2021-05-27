@@ -9,3 +9,6 @@ mod server;
 mod connection;
 
 pub use server::Server;
+pub use connection::GameEvent;
+pub use connection::PlayerEvent;
+pub use connection::PlayerConnection;

@@ -3,7 +3,7 @@ use super::packet_builder::PacketBuilder;
 use super::value_readers::read_varint;
 use super::value_readers::read_str;
 use tokio::net::TcpStream;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncWrite};
 use uuid::Uuid;
 
 const UUID_NAMESPACE: &Uuid = &Uuid::nil();
@@ -31,7 +31,7 @@ pub async fn login(conn: &mut TcpStream) -> Result<String> {
 async fn read_pack<R: AsyncRead>(reader: &mut R) -> Result<Packet>
     where R: Unpin
 {
-    let len = read_varint(reader).await?;
+    read_varint(reader).await?; // Length, unused
     let id = read_varint(reader).await?;
     match id {
         0x00 => Ok(
