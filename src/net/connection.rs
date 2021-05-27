@@ -1,14 +1,16 @@
+use std::sync::mpsc::TryIter;
 use std::{future::Future, sync::Arc};
 use crate::game::Chunk;
 use crate::game::ChunkCoords;
 use anyhow::Result;
 use anyhow::anyhow;
-
+use std::sync::Mutex;
+use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use tokio::sync::RwLock;
 
 pub enum PlayerEvent {
-
+    Disconnect(String),
 }
 
 pub enum GameEvent {
@@ -17,7 +19,7 @@ pub enum GameEvent {
 }
 
 pub struct PlayerConnection {
-    receiver: UnboundedReceiver<PlayerEvent>,
+    receiver: Mutex<Receiver<PlayerEvent>>,
     sender: UnboundedSender<GameEvent>,
 }
 
@@ -31,15 +33,19 @@ impl PlayerConnection {
     pub fn get_sender(&self) -> UnboundedSender<GameEvent> {
         self.sender.clone()
     }
+
+    pub fn receive(&mut self) -> TryIter<'_, PlayerEvent> {
+        self.receiver.get_mut().unwrap().try_iter()
+    }
 }
 
 pub struct GameConnection {
     receiver: UnboundedReceiver<GameEvent>,
-    sender: UnboundedSender<PlayerEvent>,
+    sender: Sender<PlayerEvent>,
 }
 
 impl GameConnection {
-    pub fn into_split(self) -> (UnboundedReceiver<GameEvent>, UnboundedSender<PlayerEvent>) 
+    pub fn into_split(self) -> (UnboundedReceiver<GameEvent>, Sender<PlayerEvent>) 
     {
         (self.receiver, self.sender)
     }
@@ -47,10 +53,10 @@ impl GameConnection {
 
 pub fn connection() -> (PlayerConnection, GameConnection) {
     let (game_send, game_recv) = unbounded_channel();
-    let (player_send, player_recv) = unbounded_channel();
+    let (player_send, player_recv) = channel();
     (
         PlayerConnection {
-            receiver: player_recv,
+            receiver: Mutex::new(player_recv),
             sender: game_send,
         },
         GameConnection {

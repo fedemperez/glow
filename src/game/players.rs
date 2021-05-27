@@ -2,7 +2,7 @@ use std::{collections::HashSet, time::Instant};
 
 use legion::*;
 use systems::{Builder, CommandBuffer};
-use crate::net::{GameEvent, PlayerConnection, Server};
+use crate::net::{GameEvent, PlayerEvent, PlayerConnection, Server};
 use nalgebra::Vector3;
 use super::chunks::{Chunk, ChunkCoords, ChunkWorld};
 use crate::util::get_time_millis;
@@ -89,8 +89,22 @@ fn keepalive(conn: &PlayerConnection) {
     conn.send(GameEvent::KeepAlive(get_time_millis()));
 }
 
+#[system(for_each)]
+fn receive_events(entity: &Entity, conn: &mut PlayerConnection, 
+                name: &Name, cmd: &mut CommandBuffer) {
+    for event in conn.receive() {
+        match event {
+            PlayerEvent::Disconnect(reason) => {
+                println!("{} disconnected :(, reason: {}", name.0, reason);
+                cmd.remove(*entity);
+            }
+        }
+    }
+}
+
 pub fn register_systems(schedule: &mut Builder) {
     schedule
+        .add_system(receive_events_system())
         .add_system(accept_new_players_system())
         .add_system(keepalive_system())
         .add_thread_local(send_chunks_system());

@@ -46,17 +46,11 @@ async fn listen(port: u16, motd: String, sender: Sender<(String, PlayerConnectio
         println!("New connection from {}", address);
         let motd = motd.clone();
         let sender = sender.clone();
-        tokio::spawn(async move {
-            let result = handle_to_end(conn, &motd, sender).await;
-            match result {
-                Ok(_) => println!("{} disconnected", address),
-                Err(e) => eprintln!("{} disconnected with error: {}", address, e)
-            }
-        });
+        tokio::spawn(handle_to_end(conn, motd, sender));
     }
 }
 
-async fn handle_to_end(mut conn: TcpStream, motd: &String, sender: Sender<(String, PlayerConnection)>)
+async fn handle_to_end(mut conn: TcpStream, motd: String, sender: Sender<(String, PlayerConnection)>)
     -> Result<()> 
 {
     let next_state = handshaking(&mut conn).await?;
@@ -69,7 +63,7 @@ async fn handle_to_end(mut conn: TcpStream, motd: &String, sender: Sender<(Strin
             })?;
             play(conn, game_conn).await?;
         },
-        Intent::Status => status(&mut conn, motd).await?,
+        Intent::Status => status(&mut conn, &motd).await?,
     }
     Ok(())
 }
