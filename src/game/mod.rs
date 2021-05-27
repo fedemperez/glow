@@ -1,5 +1,6 @@
 mod chunks;
 mod players;
+mod player_list;
 
 pub use chunks::{Chunk, ChunkCoords};
 
@@ -10,6 +11,7 @@ use tokio::time::sleep;
 
 use crate::{game::chunks::FlatGenerator, net::Server};
 use chunks::ChunkWorld;
+use player_list::PlayerList;
 
 const TICK_INTERVAL: Duration = Duration::from_millis(1000 / 20);
 
@@ -26,6 +28,7 @@ impl Game {
         resources.insert(ChunkWorld::new(vec![
             Box::new(FlatGenerator),
         ]));
+        resources.insert(PlayerList::new());
         let mut schedule = Schedule::builder();
         players::register_systems(&mut schedule);
         let schedule = schedule.build();

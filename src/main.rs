@@ -11,8 +11,7 @@ use net::Server;
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = Config::load().await?;
-    let server = Server::from_config(&config);
-    server.start();
+    let server = Server::start(&config);
     Game::new(server).main_loop().await;
     Ok(())
 }

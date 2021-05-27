@@ -12,7 +12,8 @@ use super::packet_builder::PacketBuilder;
 pub enum ServerEvent {
     LoadChunk(ChunkCoords, Arc<RwLock<Chunk>>),
     KeepAlive(u64),
-    PlayerPosition(Vector3<f32>)
+    PlayerPosition(Vector3<f32>),
+    PlayerJoined(String),
 }
 
 impl ServerEvent {
@@ -54,6 +55,18 @@ impl ServerEvent {
                     .add_bytes(&0f32.to_be_bytes()) // Pitch
                     .add_bytes(&[0b11000]) // Rotation relative, position absolute
                     .add_varint(0) // Teleport ID, used by client to confirm
+                    .write(writer).await
+            }
+            ServerEvent::PlayerJoined(name) => {
+                PacketBuilder::new(0x32)
+                    .add_varint(0)
+                    .add_varint(1)
+                    .add_bytes(&[0; 16])
+                    .add_str(name)
+                    .add_varint(0)
+                    .add_varint(1)
+                    .add_varint(-1i32 as u32)
+                    .add_bytes(&[0])
                     .write(writer).await
             }
         }

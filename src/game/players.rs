@@ -1,10 +1,11 @@
 use std::{collections::HashSet, time::Instant};
 
 use legion::*;
+use world::SubWorld;
 use systems::{Builder, CommandBuffer};
 use crate::net::{ClientEvent, ServerEvent, PlayerConnection, Server};
 use nalgebra::Vector3;
-use super::chunks::{Chunk, ChunkCoords, ChunkWorld};
+use super::{chunks::{Chunk, ChunkCoords, ChunkWorld}, player_list::{PlayerList, PlayerListUpdate}};
 use crate::util::get_time_millis;
 
 const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);
@@ -69,15 +70,18 @@ fn receive_events(entity: &Entity, conn: &mut PlayerConnection,
 }
 
 #[system]
-fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server) {
+fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server, 
+    #[resource] list: &mut PlayerList)
+{
     for (name, conn) in server.get_new_players() {
         conn.send(ServerEvent::PlayerPosition(SPAWN_POSITION));
         cmd.push((
             Position(SPAWN_POSITION),
-            Name(name), 
+            Name(name.clone()), 
             conn,
             ChunkRequester::new(8),
         ));
+        list.add(name);
     }
 }
 
@@ -105,10 +109,39 @@ fn send_chunks(pos: &Position, requester: &mut ChunkRequester,
     }
 }
 
+#[system]
+#[read_component(PlayerConnection)]
+fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList, 
+    #[resource] server: &mut Server)
+{
+    for update in list.flush_updates() {
+        let mut query = <(&PlayerConnection,)>::query();
+        query.for_each(world, |(conn,)| {
+            match &update {
+                PlayerListUpdate::Add(name) => {
+                    conn.send(ServerEvent::PlayerJoined(name.clone()));
+                }
+                PlayerListUpdate::Remove(name) => {
+
+                }
+            }
+        });
+        match update {
+            PlayerListUpdate::Add(name) => {
+                server.add_player(name)
+            }
+            PlayerListUpdate::Remove(name) => {
+
+            }
+        }
+    }
+}
+
 pub fn register_systems(schedule: &mut Builder) {
     schedule
         .add_system(receive_events_system())
         .add_system(accept_new_players_system())
         .add_system(keepalive_system())
+        .add_system(update_player_list_system())
         .add_thread_local(send_chunks_system());
 }

@@ -9,6 +9,7 @@ mod server;
 mod connection;
 mod server_events;
 mod client_events;
+mod status_gen;
 
 pub use server::Server;
 pub use server_events::ServerEvent;
