@@ -1,9 +1,8 @@
 use tokio::net::TcpStream;
 use anyhow::{anyhow, Result};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
-use super::value_readers::{read_varint, read_str};
+use super::value_readers::read_varint;
 use super::packet_builder::PacketBuilder;
-use serde_json::json;
 
 enum Packet {
     Request,
@@ -29,7 +28,7 @@ pub async fn status(conn: &mut TcpStream, status_str: String) -> Result<()> {
 async fn read_pack<R: AsyncRead>(reader: &mut R) -> Result<Packet>
     where R: Unpin
 {
-    let len = read_varint(reader).await?;
+    let _len = read_varint(reader).await?;
     let id = read_varint(reader).await?;
     match id {
         0x00 => Ok(Packet::Request),

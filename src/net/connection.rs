@@ -13,8 +13,8 @@ pub struct PlayerConnection {
 
 impl PlayerConnection {
     pub fn send(&self, ev: ServerEvent) -> Result<()> {
-        self.sender.send(ev).map_err(|e| {
-            anyhow!("Tried to send game event to a closed connection")
+        self.sender.send(ev).map_err(|_| {
+            anyhow!("Tried to send an event to a closed connection")
         })
     }
 

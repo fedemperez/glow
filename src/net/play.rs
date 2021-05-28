@@ -4,14 +4,14 @@ use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
 use super::{ClientEvent, ServerEvent};
+use super::client_events::UnknownPacket;
 use super::packet_builder::PacketBuilder;
 use crate::net::dimension_codec::{gen_dimension_codec, gen_default_dim};
 use crate::net::connection::GameConnection;
-use super::value_readers::read_varint;
 
 const BRAND: &str = "Cane";
 
-pub async fn play(mut conn: TcpStream, game: GameConnection) -> Result<()> {
+pub async fn play(conn: TcpStream, game: GameConnection) -> Result<()> {
     let (game_recv, mut game_send) = game.into_split();
     let (tcp_read, tcp_write) = conn.into_split();
     tokio::spawn(game_to_client(game_recv, tcp_write));
@@ -23,11 +23,15 @@ async fn client_to_game<R: AsyncRead>(mut tcp: R, game: &mut Sender<ClientEvent>
     -> Result<()> where R: Unpin
 {
     loop {
-        match read_packet(&mut tcp).await {
-            Ok(_) => {}
+        match ClientEvent::read(&mut tcp).await {
+            Ok(event) => {
+                game.send(event);
+            }
             Err(e) => {
-                game.send(ClientEvent::Disconnect(e.to_string()));
-                break;
+                if !e.is::<UnknownPacket>() {
+                    game.send(ClientEvent::Disconnect(e.to_string()));
+                    break;
+                }
             }
         }
     }
@@ -42,15 +46,6 @@ async fn game_to_client<W: AsyncWrite>(mut game: UnboundedReceiver<ServerEvent>,
     while let Some(event) = game.recv().await {
         event.write_to(&mut tcp).await?;
     }
-    Ok(())
-}
-
-async fn read_packet<R: AsyncRead>(tcp: &mut R)
-    -> Result<()> where R: Unpin
-{
-    let length = read_varint(tcp).await? as usize;
-    let mut buffer = vec![0; length];
-    tcp.read_exact(buffer.as_mut()).await?;
     Ok(())
 }
 

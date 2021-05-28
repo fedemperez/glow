@@ -6,32 +6,35 @@ use super::Position;
 use super::super::chunks::{ChunkCoords, World as Chunks};
 
 #[system(for_each)]
-pub fn send_chunks(pos: &Position, requester: &mut ChunkView, 
+pub fn update_chunk_view(pos: &Position, view: &mut ChunkView, 
                conn: &mut PlayerConnection, #[resource] chunks: &mut Chunks) 
 {
-    let needed = requester.get_needed(pos.0);
-    for coords in needed {
-        let future = chunks.get_chunk(coords);
-        let sender = conn.get_sender();
-        tokio::spawn(async move {
-            match future.await {
-                Ok(chunk) => {
-                    sender.send(ServerEvent::LoadChunk(coords, chunk));
+    if view.changed_chunk(pos.0) {
+        conn.send(ServerEvent::ChunkPosition(ChunkCoords::from_pos(pos.0)));
+        let needed = view.get_needed(pos.0);
+        for coords in needed {
+            let future = chunks.get_chunk(coords);
+            let sender = conn.get_sender();
+            tokio::spawn(async move {
+                match future.await {
+                    Ok(chunk) => {
+                        sender.send(ServerEvent::LoadChunk(coords, chunk));
+                    }
+                    Err(e) => eprintln!("Error loading chunk: {:?}", e),
                 }
-                Err(e) => eprintln!("Error loading chunk: {:?}", e),
-            }
-        });
+            });
+        }
     }
 }
 
 pub struct ChunkView {
     already_sent: HashSet<ChunkCoords>,
     last_pos: Option<Vector3<f32>>,
-    range: u8,
+    range: i32,
 }
 
 impl ChunkView {
-    pub fn new(range: u8) -> Self {
+    pub fn new(range: i32) -> Self {
         Self {
             last_pos: None,
             range,
@@ -39,7 +42,7 @@ impl ChunkView {
         }
     }
 
-    fn changed_chunk(&self, new_pos: Vector3<f32>) -> bool {
+    pub fn changed_chunk(&self, new_pos: Vector3<f32>) -> bool {
         match self.last_pos {
             Some(last_pos) => {
                 ChunkCoords::from_pos(last_pos) != ChunkCoords::from_pos(new_pos)
@@ -50,13 +53,12 @@ impl ChunkView {
 
     pub fn get_needed(&mut self, pos: Vector3<f32>) -> Vec<ChunkCoords> {
         let mut needed = vec![];
-        if self.changed_chunk(pos) {
-            for x in -8..8 {
-                for z in -8..8 {
-                    let coords = ChunkCoords(x, z);
-                    if self.already_sent.insert(coords) {
-                        needed.push(coords);
-                    }
+        let ChunkCoords(x, z) = ChunkCoords::from_pos(pos);
+        for delta_x in -self.range..self.range {
+            for delta_z in -self.range..self.range {
+                let coords = ChunkCoords(x + delta_x, z + delta_z);
+                if self.already_sent.insert(coords) {
+                    needed.push(coords);
                 }
             }
         }

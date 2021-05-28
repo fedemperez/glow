@@ -1,5 +1,5 @@
 use tokio::fs::File;
-use yaml_rust::{YamlLoader, YamlEmitter};
+use yaml_rust::YamlLoader;
 use std::io::ErrorKind::NotFound;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use anyhow::Result;

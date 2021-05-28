@@ -26,7 +26,7 @@ pub async fn handshaking(conn: &mut TcpStream) -> Result<Intent> {
 async fn read_pack<R: AsyncRead>(reader: &mut R) -> Result<Packet>
     where R: Unpin
 {
-    let len = read_varint(reader).await?;
+    let _len = read_varint(reader).await?;
     let id = read_varint(reader).await?;
     match id {
         0x00 => Ok(

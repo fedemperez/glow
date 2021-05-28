@@ -13,6 +13,7 @@ pub enum ServerEvent {
     LoadChunk(ChunkCoords, Arc<RwLock<Chunk>>),
     KeepAlive(u64),
     PlayerPosition(Vector3<f32>),
+    ChunkPosition(ChunkCoords),
     AddPlayer(Uuid, String),
     RemovePlayer(Uuid),
 }
@@ -75,6 +76,12 @@ impl ServerEvent {
                     .add_varint(4)
                     .add_varint(1)
                     .add_bytes(uuid.as_bytes())
+                    .write(writer).await
+            }
+            ServerEvent::ChunkPosition(ChunkCoords(x, z)) => {
+                PacketBuilder::new(0x40)
+                    .add_varint(*x as u32)
+                    .add_varint(*z as u32)
                     .write(writer).await
             }
         }

@@ -10,7 +10,7 @@ use nalgebra::Vector3;
 use crate::net::{ClientEvent, ServerEvent, PlayerConnection, Server};
 use crate::util::get_time_millis;
 use player_list::{PlayerList, PlayerListUpdate};
-use chunk_view::send_chunks_system;
+use chunk_view::update_chunk_view_system;
 use new_players::accept_new_players_system;
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -20,6 +20,7 @@ pub struct Name(String);
 
 #[system(for_each)]
 fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, name: &Name, 
+                  position: &mut Position,
                   cmd: &mut CommandBuffer, #[resource] list: &mut PlayerList) 
 {
     for event in conn.receive() {
@@ -28,6 +29,9 @@ fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, nam
                 println!("{} disconnected, reason: {}", name.0, reason);
                 cmd.remove(*entity);
                 list.remove(*uuid);
+            }
+            ClientEvent::Move(new_pos) => {
+                position.0 = new_pos;
             }
         }
     }
@@ -68,7 +72,7 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
         .add_system(accept_new_players_system())
         .add_system(keepalive_system())
         .add_system(update_player_list_system())
-        .add_thread_local(send_chunks_system());
+        .add_thread_local(update_chunk_view_system());
     resources
         .insert(PlayerList::new());
 }
