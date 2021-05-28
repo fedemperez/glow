@@ -5,8 +5,7 @@ use std::sync::Arc;
 use tokio::io::AsyncWrite;
 use tokio::sync::RwLock;
 
-use crate::game::Chunk;
-use crate::game::ChunkCoords;
+use crate::chunks::{Chunk, ChunkCoords};
 
 use super::packet_builder::PacketBuilder;
 
