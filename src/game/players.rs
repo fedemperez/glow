@@ -1,6 +1,7 @@
 use std::{collections::HashSet, time::Instant};
 
 use legion::*;
+use uuid::Uuid;
 use world::SubWorld;
 use systems::{Builder, CommandBuffer};
 use crate::net::{ClientEvent, ServerEvent, PlayerConnection, Server};
@@ -57,13 +58,15 @@ impl ChunkRequester {
 }
 
 #[system(for_each)]
-fn receive_events(entity: &Entity, conn: &mut PlayerConnection, 
-                name: &Name, cmd: &mut CommandBuffer) {
+fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, name: &Name, 
+    cmd: &mut CommandBuffer, #[resource] list: &mut PlayerList) 
+{
     for event in conn.receive() {
         match event {
             ClientEvent::Disconnect(reason) => {
                 println!("{} disconnected, reason: {}", name.0, reason);
                 cmd.remove(*entity);
+                list.remove(*uuid);
             }
         }
     }
@@ -73,15 +76,19 @@ fn receive_events(entity: &Entity, conn: &mut PlayerConnection,
 fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server, 
     #[resource] list: &mut PlayerList)
 {
-    for (name, conn) in server.get_new_players() {
+    for (uuid, name, conn) in server.get_new_players() {
         conn.send(ServerEvent::PlayerPosition(SPAWN_POSITION));
+        for (uuid, name) in list.get_players() {
+            conn.send(ServerEvent::AddPlayer(*uuid, name.clone()));
+        }
         cmd.push((
+            uuid,
             Position(SPAWN_POSITION),
             Name(name.clone()), 
             conn,
             ChunkRequester::new(8),
         ));
-        list.add(name);
+        list.add(uuid, name);
     }
 }
 
@@ -114,25 +121,21 @@ fn send_chunks(pos: &Position, requester: &mut ChunkRequester,
 fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList, 
     #[resource] server: &mut Server)
 {
-    for update in list.flush_updates() {
-        let mut query = <(&PlayerConnection,)>::query();
-        query.for_each(world, |(conn,)| {
-            match &update {
-                PlayerListUpdate::Add(name) => {
-                    conn.send(ServerEvent::PlayerJoined(name.clone()));
+    let updates = list.flush_updates();
+    if updates.len() > 0 {
+        server.update_list(list.count(), list.get_sample());
+        for update in updates {
+            let mut query = <(&PlayerConnection,)>::query();
+            query.for_each(world, |(conn,)| {
+                match &update {
+                    PlayerListUpdate::Add(uuid, name) => {
+                        conn.send(ServerEvent::AddPlayer(*uuid, name.clone()));
+                    }
+                    PlayerListUpdate::Remove(uuid) => {
+                        conn.send(ServerEvent::RemovePlayer(*uuid));
+                    }
                 }
-                PlayerListUpdate::Remove(name) => {
-
-                }
-            }
-        });
-        match update {
-            PlayerListUpdate::Add(name) => {
-                server.add_player(name)
-            }
-            PlayerListUpdate::Remove(name) => {
-
-            }
+            });
         }
     }
 }

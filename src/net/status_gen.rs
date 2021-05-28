@@ -1,7 +1,9 @@
 use serde::Serialize;
 use serde_json::json;
 
-pub fn gen_status_str(motd: &String, player_list: &Vec<String>) -> String {
+pub fn gen_status_str(motd: &String, player_count: usize, player_list: &Vec<String>)
+     -> String 
+{
     json!({
         "version": {
             "name": "1.16.5",
@@ -9,7 +11,7 @@ pub fn gen_status_str(motd: &String, player_list: &Vec<String>) -> String {
         },
         "players": {
             "max": 100,
-            "online": player_list.len(),
+            "online": player_count,
             "sample": player_list.iter().map(|player| PlayerSample::new(player))
                 .collect::<Vec<PlayerSample<'_>>>()
         },

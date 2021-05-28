@@ -14,16 +14,13 @@ enum Packet {
     }
 }
 
-pub async fn login(conn: &mut TcpStream) -> Result<String> {
+pub async fn login(conn: &mut TcpStream) -> Result<(Uuid, String)> {
     let packet = read_pack(conn).await?;
     match packet {
         Packet::Login { name } => {
-            send_success(
-                name.as_str(),
-                Uuid::new_v3(UUID_NAMESPACE, name.as_bytes()),
-                conn,
-            ).await?;
-            Ok(name)
+            let uuid = Uuid::new_v3(UUID_NAMESPACE, name.as_bytes());
+            send_success(name.as_str(), &uuid, conn).await?;
+            Ok((uuid, name))
         }
     }
 }
@@ -42,7 +39,7 @@ async fn read_pack<R: AsyncRead>(reader: &mut R) -> Result<Packet>
     }
 }
 
-async fn send_success<W: AsyncWrite>(name: &str, uuid: Uuid, writer: &mut W) -> Result<()>
+async fn send_success<W: AsyncWrite>(name: &str, uuid: &Uuid, writer: &mut W) -> Result<()>
     where W: Unpin
 {
     PacketBuilder::new(0x02)

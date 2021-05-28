@@ -1,5 +1,6 @@
 use anyhow::Result;
 use nalgebra::Vector3;
+use uuid::Uuid;
 use std::sync::Arc;
 use tokio::io::AsyncWrite;
 use tokio::sync::RwLock;
@@ -13,7 +14,8 @@ pub enum ServerEvent {
     LoadChunk(ChunkCoords, Arc<RwLock<Chunk>>),
     KeepAlive(u64),
     PlayerPosition(Vector3<f32>),
-    PlayerJoined(String),
+    AddPlayer(Uuid, String),
+    RemovePlayer(Uuid),
 }
 
 impl ServerEvent {
@@ -57,16 +59,23 @@ impl ServerEvent {
                     .add_varint(0) // Teleport ID, used by client to confirm
                     .write(writer).await
             }
-            ServerEvent::PlayerJoined(name) => {
+            ServerEvent::AddPlayer(uuid, name) => {
                 PacketBuilder::new(0x32)
                     .add_varint(0)
                     .add_varint(1)
-                    .add_bytes(&[0; 16])
+                    .add_bytes(uuid.as_bytes())
                     .add_str(name)
                     .add_varint(0)
                     .add_varint(1)
                     .add_varint(-1i32 as u32)
                     .add_bytes(&[0])
+                    .write(writer).await
+            }
+            ServerEvent::RemovePlayer(uuid) => {
+                PacketBuilder::new(0x32)
+                    .add_varint(4)
+                    .add_varint(1)
+                    .add_bytes(uuid.as_bytes())
                     .write(writer).await
             }
         }
