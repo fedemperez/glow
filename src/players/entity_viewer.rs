@@ -2,13 +2,14 @@ use std::collections::{HashSet, HashMap};
 use uuid::Uuid;
 use legion::*;
 use world::SubWorld;
-use crate::entities::{EntityId, Position, SpatialHashMap};
+use crate::entities::{EntityId, Position, Rotation, SpatialHashMap};
 use crate::net::{PlayerConnection, ServerEvent};
 
 const VIEW_RANGE: u32 = 6 * 16;
 
 #[system]
 #[read_component(Position)]
+#[read_component(Rotation)]
 #[read_component(Uuid)]
 #[read_component(EntityId)]
 #[write_component(EntityViewer)]
@@ -32,8 +33,10 @@ pub fn send_visible_entities(world: &mut SubWorld, #[resource] map: &SpatialHash
             let entry = world.entry_ref(entity).unwrap();
             let id = entry.get_component::<EntityId>().unwrap();
             let position = entry.get_component::<Position>().unwrap();
+            let rotation = entry.get_component::<Rotation>().unwrap();
             if already_seen.contains_key(&entity) {
-                connection.send(ServerEvent::EntityMoved(*id, position.0));
+                connection.send(ServerEvent::EntityTeleported(*id, position.0, (rotation.0, rotation.1)));
+                connection.send(ServerEvent::EntityHeadRotated(*id, rotation.0));
                 already_seen.remove(&entity);
             } else {
                 let uuid = entry.get_component::<Uuid>().unwrap();

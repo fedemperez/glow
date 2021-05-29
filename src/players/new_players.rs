@@ -7,6 +7,7 @@ use super::PlayerList;
 use super::entity_viewer::EntityViewer;
 use super::{Position, Name};
 use crate::entities::EntityIdGenerator;
+use crate::entities::Rotation;
 use crate::entities::SpatialHashMap;
 use crate::net::{Server, ServerEvent};
 
@@ -28,6 +29,7 @@ pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Serv
             entity_id_gen.get_new(),
             uuid,
             Position(SPAWN_POSITION),
+            Rotation(0.0, 0.0),
             Name(name.clone()), 
             conn,
             ChunkView::new(8),

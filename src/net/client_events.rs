@@ -8,6 +8,7 @@ use super::value_readers::read_varint;
 pub enum ClientEvent {
     Disconnect(String),
     Move(Vector3<f32>),
+    Rotate(f32, f32),
 }
 
 impl ClientEvent {
@@ -24,6 +25,12 @@ impl ClientEvent {
                 let z = f64::from_bits(reader.read_u64().await?) as f32;
                 let on_ground = reader.read_u8().await? != 0;
                 Ok(ClientEvent::Move(Vector3::new(x, y, z)))
+            }
+            0x14 => {
+                let yaw = f32::from_bits(reader.read_u32().await?);
+                let pitch = f32::from_bits(reader.read_u32().await?);
+                let on_ground = reader.read_u8().await? != 0;
+                Ok(ClientEvent::Rotate(yaw, pitch))
             }
             id => {
                 let mut buffer = vec![0; length - 1];

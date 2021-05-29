@@ -34,6 +34,12 @@ impl PacketBuilder {
         self
     }
 
+    pub fn add_angle(&mut self, angle: f32) -> &mut Self {
+        let angle = ((angle / 360.0) * 256.0).rem_euclid(256.0) as u8;
+        self.add_bytes(&[angle]);
+        self
+    }
+
     pub async fn write<W: AsyncWrite>(&self, writer: &mut W) -> Result<()>
         where W: Unpin
     {

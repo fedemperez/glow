@@ -12,13 +12,14 @@ use player_list::{PlayerList, update_player_list_system};
 use chunk_view::update_chunk_view_system;
 use new_players::accept_new_players_system;
 use entity_viewer::send_visible_entities_system;
-use crate::entities::{Position, SpatialHash, SpatialHashMap};
+use crate::entities::{Position, Rotation, SpatialHash, SpatialHashMap};
 
 pub struct Name(pub String);
 
 #[system(for_each)]
 fn receive_events(entity: &Entity, conn: &mut PlayerConnection, name: &Name, 
-                  position: &mut Position, cmd: &mut CommandBuffer) 
+                  position: &mut Position, rotation: &mut Rotation,
+                  cmd: &mut CommandBuffer) 
 {
     for event in conn.receive() {
         match event {
@@ -31,6 +32,9 @@ fn receive_events(entity: &Entity, conn: &mut PlayerConnection, name: &Name,
             }
             ClientEvent::Move(new_pos) => {
                 position.0 = new_pos;
+            }
+            ClientEvent::Rotate(yaw, pitch) => {
+                *rotation = Rotation(yaw, pitch);
             }
         }
     }
