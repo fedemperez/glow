@@ -16,6 +16,8 @@ pub enum ServerEvent {
     ChunkPosition(ChunkCoords),
     AddPlayer(Uuid, String),
     RemovePlayer(Uuid),
+    PlayerMoved(Uuid, Vector3<f32>),
+    SpawnPlayer(Uuid, Vector3<f32>),
 }
 
 impl ServerEvent {
@@ -82,6 +84,28 @@ impl ServerEvent {
                 PacketBuilder::new(0x40)
                     .add_varint(*x as u32)
                     .add_varint(*z as u32)
+                    .write(writer).await
+            }
+            ServerEvent::PlayerMoved(uuid, pos) => {
+                PacketBuilder::new(0x56)
+                    .add_varint(12)
+                    .add_bytes(&(pos.x as f64).to_be_bytes())
+                    .add_bytes(&(pos.y as f64).to_be_bytes())
+                    .add_bytes(&(pos.z as f64).to_be_bytes())
+                    .add_bytes(&[0])
+                    .add_bytes(&[0])
+                    .add_bytes(&[1])
+                    .write(writer).await
+            }
+            ServerEvent::SpawnPlayer(uuid, pos) => {
+                PacketBuilder::new(0x04)
+                    .add_varint(12)
+                    .add_bytes(uuid.as_bytes())
+                    .add_bytes(&(pos.x as f64).to_be_bytes())
+                    .add_bytes(&(pos.y as f64).to_be_bytes())
+                    .add_bytes(&(pos.z as f64).to_be_bytes())
+                    .add_bytes(&[0])
+                    .add_bytes(&[0])
                     .write(writer).await
             }
         }

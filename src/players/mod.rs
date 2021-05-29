@@ -15,7 +15,7 @@ use new_players::accept_new_players_system;
 use entity_viewer::send_visible_entities_system;
 use crate::entities::{Position, SpatialHash, SpatialHashMap};
 
-pub struct Name(String);
+pub struct Name(pub String);
 
 #[system(for_each)]
 fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, name: &Name, 
@@ -68,12 +68,12 @@ fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList,
 
 pub fn register(schedule: &mut Builder, resources: &mut Resources) {
     schedule
-        .add_system(receive_events_system())
-        .add_system(accept_new_players_system())
-        .add_system(keepalive_system())
         .add_system(update_player_list_system())
+        .add_system(receive_events_system())
+        .add_system(keepalive_system())
         .add_system(send_visible_entities_system())
-        .add_thread_local(update_chunk_view_system());
+        .add_thread_local(update_chunk_view_system())
+        .add_system(accept_new_players_system());
     resources
         .insert(PlayerList::new());
 }

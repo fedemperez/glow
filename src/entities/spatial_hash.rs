@@ -46,17 +46,17 @@ impl SpatialHashMap {
         }
     }
 
-    pub fn get_close_entities(&mut self, from: &Vector3<f32>, aprox_distance: u32)
-     -> Vec<Entity> 
+    pub fn get_close_entities(&self, from: &Vector3<f32>, aprox_distance: u32)
+     -> HashSet<Entity> 
     {
-        let mut result = vec![];
+        let mut result = HashSet::new();
         let bucket_distance = aprox_distance.div_ceil(&BUCKET_SIZE) as i32;
         let SpatialHash(center_x, center_z) = SpatialHash::from_pos(from);
         for delta_x in -bucket_distance..bucket_distance {
             for delta_z in -bucket_distance..bucket_distance {
                 let hash = SpatialHash(center_x + delta_x, center_z + delta_z);
                 if let Some(bucket) = self.buckets.get(&hash) {
-                    bucket.push_to(&mut result);
+                    bucket.add_to(&mut result);
                 }
             }
         }
@@ -89,7 +89,7 @@ impl Bucket {
         self.0.remove(entity);
     }
 
-    fn push_to(&self, vec: &mut Vec<Entity>) {
-        vec.extend(self.0.iter());
+    fn add_to(&self, set: &mut HashSet<Entity>) {
+        set.extend(self.0.iter());
     }
 }
