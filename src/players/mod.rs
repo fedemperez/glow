@@ -1,6 +1,7 @@
 mod player_list;
 mod chunk_view;
 mod new_players;
+mod entity_viewer;
 
 use legion::*;
 use uuid::Uuid;
@@ -11,6 +12,7 @@ use crate::util::get_time_millis;
 use player_list::{PlayerList, PlayerListUpdate};
 use chunk_view::update_chunk_view_system;
 use new_players::accept_new_players_system;
+use entity_viewer::send_visible_entities_system;
 use crate::entities::{Position, SpatialHash, SpatialHashMap};
 
 pub struct Name(String);
@@ -70,6 +72,7 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
         .add_system(accept_new_players_system())
         .add_system(keepalive_system())
         .add_system(update_player_list_system())
+        .add_system(send_visible_entities_system())
         .add_thread_local(update_chunk_view_system());
     resources
         .insert(PlayerList::new());

@@ -4,6 +4,7 @@ use nalgebra::Vector3;
 
 use super::chunk_view::ChunkView;
 use super::PlayerList;
+use super::entity_viewer::EntityViewer;
 use super::{Position, Name};
 use crate::entities::SpatialHashMap;
 use crate::net::{Server, ServerEvent};
@@ -27,6 +28,7 @@ pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Serv
             Name(name.clone()), 
             conn,
             ChunkView::new(8),
+            EntityViewer::new(),
         ));
         list.add(uuid, name);
         let space_hash = entity_map.add(entity, &position);

@@ -5,7 +5,7 @@ use legion::*;
 
 use super::Position;
 
-const BUCKET_SIZE: i32 = 16;
+const BUCKET_SIZE: u32 = 16;
 
 #[system(for_each)]
 pub fn update_spatial_hash(entity: &Entity, pos: &Position, hash: &mut SpatialHash, 
@@ -45,6 +45,23 @@ impl SpatialHashMap {
             bucket.remove(entity);
         }
     }
+
+    pub fn get_close_entities(&mut self, from: &Vector3<f32>, aprox_distance: u32)
+     -> Vec<Entity> 
+    {
+        let mut result = vec![];
+        let bucket_distance = aprox_distance.div_ceil(&BUCKET_SIZE) as i32;
+        let SpatialHash(center_x, center_z) = SpatialHash::from_pos(from);
+        for delta_x in -bucket_distance..bucket_distance {
+            for delta_z in -bucket_distance..bucket_distance {
+                let hash = SpatialHash(center_x + delta_x, center_z + delta_z);
+                if let Some(bucket) = self.buckets.get(&hash) {
+                    bucket.push_to(&mut result);
+                }
+            }
+        }
+        result
+    }
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -52,8 +69,8 @@ pub struct SpatialHash(i32, i32);
 
 impl SpatialHash {
     fn from_pos(pos: &Vector3<f32>) -> Self {
-        Self((pos.x.floor() as i32).div_floor(&(BUCKET_SIZE)),
-             (pos.z.floor() as i32).div_floor(&(BUCKET_SIZE)))
+        Self((pos.x.floor() as i32).div_floor(&(BUCKET_SIZE as i32)),
+             (pos.z.floor() as i32).div_floor(&(BUCKET_SIZE as i32)))
     }
 }
 
@@ -70,5 +87,9 @@ impl Bucket {
 
     fn remove(&mut self, entity: &Entity) {
         self.0.remove(entity);
+    }
+
+    fn push_to(&self, vec: &mut Vec<Entity>) {
+        vec.extend(self.0.iter());
     }
 }
