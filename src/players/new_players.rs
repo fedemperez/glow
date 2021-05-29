@@ -6,6 +6,7 @@ use super::chunk_view::ChunkView;
 use super::PlayerList;
 use super::entity_viewer::EntityViewer;
 use super::{Position, Name};
+use crate::entities::EntityIdGenerator;
 use crate::entities::SpatialHashMap;
 use crate::net::{Server, ServerEvent};
 
@@ -14,7 +15,8 @@ const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);
 #[system]
 pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server, 
                          #[resource] list: &mut PlayerList,
-                         #[resource] entity_map: &mut SpatialHashMap)
+                         #[resource] entity_map: &mut SpatialHashMap,
+                         #[resource] entity_id_gen: &EntityIdGenerator)
 {
     for (uuid, name, conn) in server.get_new_players() {
         let position = SPAWN_POSITION;
@@ -23,6 +25,7 @@ pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Serv
             conn.send(ServerEvent::AddPlayer(*uuid, name.clone()));
         }
         let entity = cmd.push((
+            entity_id_gen.get_new(),
             uuid,
             Position(SPAWN_POSITION),
             Name(name.clone()), 

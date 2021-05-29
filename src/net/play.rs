@@ -53,7 +53,7 @@ async fn send_join_game<W: AsyncWrite>(writer: &mut W) -> Result<()>
     where W: Unpin
 {
     PacketBuilder::new(0x24)
-        .add_bytes(&0u32.to_be_bytes()) // Entity ID
+        .add_bytes(&(-1i32).to_be_bytes()) // Entity ID
         .add_bytes(&[0]) // Is hardcore
         .add_bytes(&[1]) // Gamemode
         .add_bytes(&[1]) // Prev gamemode

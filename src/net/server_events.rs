@@ -6,6 +6,7 @@ use tokio::io::AsyncWrite;
 use tokio::sync::RwLock;
 
 use crate::chunks::{Chunk, ChunkCoords};
+use crate::entities::EntityId;
 
 use super::packet_builder::PacketBuilder;
 
@@ -16,8 +17,9 @@ pub enum ServerEvent {
     ChunkPosition(ChunkCoords),
     AddPlayer(Uuid, String),
     RemovePlayer(Uuid),
-    PlayerMoved(Uuid, Vector3<f32>),
-    SpawnPlayer(Uuid, Vector3<f32>),
+    EntityMoved(EntityId, Vector3<f32>),
+    DestroyEntities(Vec<EntityId>),
+    SpawnPlayer(Uuid, EntityId, Vector3<f32>),
 }
 
 impl ServerEvent {
@@ -86,9 +88,9 @@ impl ServerEvent {
                     .add_varint(*z as u32)
                     .write(writer).await
             }
-            ServerEvent::PlayerMoved(uuid, pos) => {
+            ServerEvent::EntityMoved(id, pos) => {
                 PacketBuilder::new(0x56)
-                    .add_varint(12)
+                    .add_varint(id.0)
                     .add_bytes(&(pos.x as f64).to_be_bytes())
                     .add_bytes(&(pos.y as f64).to_be_bytes())
                     .add_bytes(&(pos.z as f64).to_be_bytes())
@@ -97,9 +99,9 @@ impl ServerEvent {
                     .add_bytes(&[1])
                     .write(writer).await
             }
-            ServerEvent::SpawnPlayer(uuid, pos) => {
+            ServerEvent::SpawnPlayer(uuid, entity_id, pos) => {
                 PacketBuilder::new(0x04)
-                    .add_varint(12)
+                    .add_varint(entity_id.0)
                     .add_bytes(uuid.as_bytes())
                     .add_bytes(&(pos.x as f64).to_be_bytes())
                     .add_bytes(&(pos.y as f64).to_be_bytes())
@@ -107,6 +109,14 @@ impl ServerEvent {
                     .add_bytes(&[0])
                     .add_bytes(&[0])
                     .write(writer).await
+            }
+            ServerEvent::DestroyEntities(entities) => {
+                let mut builder = PacketBuilder::new(0x36);
+                builder.add_varint(entities.len() as u32);
+                for entity in entities {
+                    builder.add_varint(entity.0);
+                }
+                builder.write(writer).await
             }
         }
     }
