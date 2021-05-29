@@ -6,22 +6,19 @@ use legion::*;
 use uuid::Uuid;
 use world::SubWorld;
 use systems::{Builder, CommandBuffer};
-use nalgebra::Vector3;
 use crate::net::{ClientEvent, ServerEvent, PlayerConnection, Server};
 use crate::util::get_time_millis;
 use player_list::{PlayerList, PlayerListUpdate};
 use chunk_view::update_chunk_view_system;
 use new_players::accept_new_players_system;
-
-#[derive(Clone, Copy, Debug, Default)]
-pub struct Position(Vector3<f32>);
+use crate::entities::{Position, SpatialHash, SpatialHashMap};
 
 pub struct Name(String);
 
 #[system(for_each)]
 fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, name: &Name, 
-                  position: &mut Position,
-                  cmd: &mut CommandBuffer, #[resource] list: &mut PlayerList) 
+                  space_hash: &mut SpatialHash, position: &mut Position, cmd: &mut CommandBuffer, 
+                  #[resource] list: &mut PlayerList, #[resource] entity_map: &mut SpatialHashMap) 
 {
     for event in conn.receive() {
         match event {
@@ -29,6 +26,7 @@ fn receive_events(entity: &Entity, conn: &mut PlayerConnection, uuid: &Uuid, nam
                 println!("{} disconnected, reason: {}", name.0, reason);
                 cmd.remove(*entity);
                 list.remove(*uuid);
+                entity_map.remove(entity, space_hash);
             }
             ClientEvent::Move(new_pos) => {
                 position.0 = new_pos;

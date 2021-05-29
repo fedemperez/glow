@@ -86,6 +86,7 @@ dependencies = [
  "hematite-nbt",
  "legion",
  "nalgebra",
+ "num-integer",
  "serde",
  "serde_json",
  "thiserror",
