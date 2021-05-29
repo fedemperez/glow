@@ -1,6 +1,33 @@
+use legion::*;
+use world::SubWorld;
+use crate::net::{PlayerConnection, Server, ServerEvent};
 use std::mem::take;
 use std::collections::HashMap;
 use uuid::Uuid;
+
+#[system]
+#[read_component(PlayerConnection)]
+fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList, 
+                      #[resource] server: &mut Server)
+{
+    let updates = list.flush_updates();
+    if updates.len() > 0 {
+        server.update_list(list.count(), list.get_sample());
+        for update in updates {
+            let mut query = <(&PlayerConnection,)>::query();
+            query.for_each(world, |(conn,)| {
+                match &update {
+                    PlayerListUpdate::Add(uuid, name) => {
+                        conn.send(ServerEvent::AddPlayer(*uuid, name.clone()));
+                    }
+                    PlayerListUpdate::Remove(uuid) => {
+                        conn.send(ServerEvent::RemovePlayer(*uuid));
+                    }
+                }
+            });
+        }
+    }
+}
 
 pub struct PlayerList {
     players: HashMap<Uuid, String>,
