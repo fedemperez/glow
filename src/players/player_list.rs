@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 #[system]
 #[read_component(PlayerConnection)]
-fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList, 
+pub fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList, 
                       #[resource] server: &mut Server)
 {
     let updates = list.flush_updates();
