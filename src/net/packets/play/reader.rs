@@ -1,18 +1,13 @@
-use nalgebra::Vector3;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use anyhow::{Result, anyhow};
-use thiserror::Error;
+use super::super::errors::UnknownPacket;
+use super::serverbound::ServerboundPacket;
+use super::super::value_readers::{read_block_pos, read_varint};
 
-use super::value_readers::read_varint;
-
-pub enum ClientEvent {
-    Disconnect(String),
-    Move(Vector3<f32>),
-    Rotate(f32, f32),
-}
-
-impl ClientEvent {
-    pub async fn read<R: AsyncRead + Unpin>(reader: &mut R) -> Result<Self> {
+impl ServerboundPacket {
+    pub async fn read<R>(reader: &mut R) -> Result<Self> 
+    where R: AsyncRead + Unpin
+    {
         let length = read_varint(reader).await? as usize;
         if length == 0 {
             return Err(anyhow!("Packet length cannot be 0"));
@@ -24,13 +19,24 @@ impl ClientEvent {
                 let y = f64::from_bits(reader.read_u64().await?) as f32;
                 let z = f64::from_bits(reader.read_u64().await?) as f32;
                 let on_ground = reader.read_u8().await? != 0;
-                Ok(ClientEvent::Move(Vector3::new(x, y, z)))
+                Ok(Self::Move(x, y, z))
             }
             0x14 => {
                 let yaw = f32::from_bits(reader.read_u32().await?);
                 let pitch = f32::from_bits(reader.read_u32().await?);
                 let on_ground = reader.read_u8().await? != 0;
-                Ok(ClientEvent::Rotate(yaw, pitch))
+                Ok(Self::Rotate(yaw, pitch))
+            }
+            0x1B => {
+                let status = reader.read_u8().await?;
+                let (x, y, z) = read_block_pos(reader).await?;
+                let face = reader.read_u8().await?;
+                match status {
+                    0 => {
+                        Ok(Self::BreakBlock(x, y, z))
+                    }
+                    _ => Err(UnknownPacket(id).into()),
+                }
             }
             id => {
                 let mut buffer = vec![0; length - 1];
@@ -40,7 +46,3 @@ impl ClientEvent {
         }
     }
 }
-
-#[derive(Error, Debug)]
-#[error("Unknown packet id: {0}")]
-pub struct UnknownPacket(pub u8);

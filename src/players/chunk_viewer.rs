@@ -1,9 +1,10 @@
 use legion::*;
 use std::collections::HashSet;
 use nalgebra::Vector3;
-use crate::net::{ServerEvent, PlayerConnection};
-use super::Position;
-use super::super::chunks::{ChunkCoords, World as Chunks};
+use crate::net::PlayerConnection;
+use crate::events::ServerEvent;
+use crate::entities::Position;
+use crate::chunks::{ChunkCoords, World as Chunks};
 
 #[system(for_each)]
 pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer, 

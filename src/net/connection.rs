@@ -1,7 +1,6 @@
 use std::sync::mpsc::TryIter;
-use super::{ClientEvent, ServerEvent};
-use anyhow::Result;
-use anyhow::anyhow;
+use crate::events::{ClientEvent, ServerEvent};
+use anyhow::{Result, anyhow};
 use std::sync::Mutex;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};

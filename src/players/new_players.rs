@@ -5,11 +5,12 @@ use nalgebra::Vector3;
 use super::chunk_viewer::ChunkViewer;
 use super::PlayerList;
 use super::entity_viewer::EntityViewer;
-use super::{Position, Name};
+use crate::entities::{Name, Position};
 use crate::entities::EntityIdGenerator;
 use crate::entities::Rotation;
 use crate::entities::SpatialHashMap;
-use crate::net::{Server, ServerEvent};
+use crate::net::Server;
+use crate::events::ServerEvent;
 
 const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);
 

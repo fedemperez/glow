@@ -6,7 +6,7 @@ use legion::*;
 use systems::Builder;
 use spatial_hash::update_spatial_hash_system;
 
-pub use components::{Position, Rotation};
+pub use components::{Position, Rotation, Name};
 pub use spatial_hash::{SpatialHashMap, SpatialHash};
 pub use entity_id::{EntityId, EntityIdGenerator};
 

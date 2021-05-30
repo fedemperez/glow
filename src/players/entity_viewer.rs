@@ -3,7 +3,8 @@ use uuid::Uuid;
 use legion::*;
 use world::SubWorld;
 use crate::entities::{EntityId, Position, Rotation, SpatialHashMap};
-use crate::net::{PlayerConnection, ServerEvent};
+use crate::net::PlayerConnection;
+use crate::events::ServerEvent;
 
 const VIEW_RANGE: u32 = 6 * 16;
 

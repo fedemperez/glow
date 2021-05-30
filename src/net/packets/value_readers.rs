@@ -28,3 +28,13 @@ pub async fn read_str<R: AsyncRead>(reader: &mut R) -> Result<String>
     reader.read_exact(buffer.as_mut_slice()).await?;
     String::from_utf8(buffer).map_err(|e| anyhow::Error::new(e))
 }
+
+pub async fn read_block_pos<R: AsyncRead>(reader: &mut R) -> Result<(i32, i32, i32)>
+    where R: Unpin
+{
+    let val = reader.read_i64().await?;
+    let x = val >> 38;
+    let y = val & 0xFFF;
+    let z = val << 26 >> 38;
+    Ok((x as i32, y as i32, z as i32))
+}

@@ -1,6 +1,7 @@
 use legion::*;
 use world::SubWorld;
-use crate::net::{PlayerConnection, Server, ServerEvent};
+use crate::net::{PlayerConnection, Server};
+use crate::events::ServerEvent;
 use std::mem::take;
 use std::collections::HashMap;
 use uuid::Uuid;

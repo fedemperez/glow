@@ -23,7 +23,7 @@ impl Server {
             config.port, 
             config.motd.clone(), 
             player_send, 
-            list_recv
+            list_recv,
         ));
         Self {
             player_recv,

@@ -1,13 +1,14 @@
+use nalgebra::Vector3;
 use tokio::net::TcpStream;
 use anyhow::Result;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
-use super::{ClientEvent, ServerEvent};
-use super::client_events::UnknownPacket;
-use super::packet_builder::PacketBuilder;
-use crate::net::dimension_codec::{gen_dimension_codec, gen_default_dim};
-use crate::net::connection::GameConnection;
+use crate::events::{ClientEvent, ServerEvent};
+use super::dimension_codec::{gen_dimension_codec, gen_default_dim};
+use super::connection::GameConnection;
+use super::packets::errors::UnknownPacket;
+use super::packets::play::{ClientboundPacket, ServerboundPacket};
 
 const BRAND: &str = "Cane";
 
@@ -15,66 +16,79 @@ pub async fn play(conn: TcpStream, game: GameConnection) -> Result<()> {
     let (game_recv, mut game_send) = game.into_split();
     let (tcp_read, tcp_write) = conn.into_split();
     tokio::spawn(game_to_client(game_recv, tcp_write));
-    client_to_game(tcp_read, &mut game_send).await?;
+    client_to_game(tcp_read, &mut game_send).await;
     Ok(())
 }
 
-async fn client_to_game<R: AsyncRead>(mut tcp: R, game: &mut Sender<ClientEvent>)
-    -> Result<()> where R: Unpin
+async fn client_to_game<R>(mut tcp: R, game: &mut Sender<ClientEvent>)
+    where R: AsyncRead + Unpin
 {
     loop {
-        match ClientEvent::read(&mut tcp).await {
-            Ok(event) => {
-                game.send(event);
+        match ServerboundPacket::read(&mut tcp).await {
+            Ok(packet) => {
+                send_events(&packet, game);
             }
-            Err(e) => {
-                if !e.is::<UnknownPacket>() {
-                    game.send(ClientEvent::Disconnect(e.to_string()));
+            Err(error) => {
+                if !error.is::<UnknownPacket>() {
+                    game.send(ClientEvent::Disconnect(error.to_string()));
                     break;
                 }
             }
         }
     }
-    Ok(())
 }
 
-async fn game_to_client<W: AsyncWrite>(mut game: UnboundedReceiver<ServerEvent>, mut tcp: W)
-    -> Result<()> where W: Unpin
+async fn game_to_client<W>(mut game: UnboundedReceiver<ServerEvent>, mut tcp: W) -> Result<()>
+    where W: AsyncWrite + Unpin
 {
-    send_join_game(&mut tcp).await?;
-    send_brand(&mut tcp).await?;
+    send_initial_packets(&mut tcp).await;
     while let Some(event) = game.recv().await {
-        event.write_to(&mut tcp).await?;
+        send_packets(&event, &mut tcp).await;
     }
     Ok(())
 }
 
-async fn send_join_game<W: AsyncWrite>(writer: &mut W) -> Result<()>
-    where W: Unpin
-{
-    PacketBuilder::new(0x24)
-        .add_bytes(&(-1i32).to_be_bytes()) // Entity ID
-        .add_bytes(&[0]) // Is hardcore
-        .add_bytes(&[1]) // Gamemode
-        .add_bytes(&[1]) // Prev gamemode
-        .add_varint(1) // Size of following array
-        .add_str("world") // World names array
-        .add_nbt(&gen_dimension_codec()) // Dimension codec
-        .add_nbt(&gen_default_dim()) // Dimension
-        .add_str("world") // World where the player is spawning
-        .add_bytes(&[0; 8]) // First 8 bytes of the SHA-256 of the seed
-        .add_varint(0) // Max players, unused
-        .add_varint(6) // View distance
-        .add_bytes(&[0]) // Should debug info be hidden (F3)
-        .add_bytes(&[1]) // Show the "You died" screen instead of respawning immediately
-        .add_bytes(&[0]) // Is debug world
-        .add_bytes(&[0]) // Is superflat world
-        .write(writer).await
+fn send_events(packet: &ServerboundPacket, sender: &mut Sender<ClientEvent>) {
+    let event = match *packet {
+        ServerboundPacket::Move(x, y, z) => ClientEvent::Move(Vector3::new(x, y, z)),
+        ServerboundPacket::Rotate(yaw, pitch) => ClientEvent::Rotate(yaw, pitch),
+        ServerboundPacket::BreakBlock(x, y, z) => ClientEvent::BreakBlock(x, y, z),
+    };
+    sender.send(event);
 }
 
-async fn send_brand<W: AsyncWrite>(writer: &mut W) -> Result<()> where W: Unpin {
-    PacketBuilder::new(0x17)
-        .add_str("minecraft:brand")
-        .add_str(BRAND)
-        .write(writer).await
+async fn send_packets<W>(event: &ServerEvent, sender: &mut W) -> Result<()>
+    where W: AsyncWrite + Unpin 
+{
+    match event {
+        ServerEvent::LoadChunk(_, _) => {}
+        ServerEvent::KeepAlive(_) => {}
+        ServerEvent::PlayerPosition(_) => {}
+        ServerEvent::ChunkPosition(_) => {}
+        ServerEvent::AddPlayer(_, _) => {}
+        ServerEvent::RemovePlayer(_) => {}
+        ServerEvent::EntityTeleported(_, _, _) => {}
+        ServerEvent::EntityMoved(_, _) => {}
+        ServerEvent::EntityRotated(_, _) => {}
+        ServerEvent::EntityHeadRotated(_, _) => {}
+        ServerEvent::DestroyEntities(_) => {}
+        ServerEvent::SpawnPlayer(_, _, _) => {}
+    }
+    Ok(())
+}
+
+async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
+    where W: AsyncWrite + Unpin 
+{
+    ClientboundPacket::JoinGame {
+        entity_id: 999,
+        gamemode: 1,
+        dimension_codec: gen_dimension_codec(),
+        dimension: gen_default_dim(),
+        view_distance: 6,
+    }.send(writer).await?;
+    ClientboundPacket::PluginMessage {
+        channel: "minecraft:brand",
+        content: BRAND.as_bytes(),
+    }.send(writer).await
 }

@@ -2,43 +2,19 @@ mod player_list;
 mod chunk_viewer;
 mod new_players;
 mod entity_viewer;
+mod event_receiver;
+mod remove_player;
 
 use legion::*;
-use uuid::Uuid;
-use systems::{Builder, CommandBuffer};
-use crate::net::{ClientEvent, ServerEvent, PlayerConnection};
+use systems::Builder;
+use crate::net::PlayerConnection;
 use crate::util::get_time_millis;
+use crate::events::ServerEvent;
 use player_list::{PlayerList, update_player_list_system};
 use chunk_viewer::update_chunk_view_system;
 use new_players::accept_new_players_system;
 use entity_viewer::send_visible_entities_system;
-use crate::entities::{Position, Rotation, SpatialHash, SpatialHashMap};
-
-pub struct Name(pub String);
-
-#[system(for_each)]
-fn receive_events(entity: &Entity, conn: &mut PlayerConnection, name: &Name, 
-                  position: &mut Position, rotation: &mut Rotation,
-                  cmd: &mut CommandBuffer) 
-{
-    for event in conn.receive() {
-        match event {
-            ClientEvent::Disconnect(reason) => {
-                println!("{} disconnected, reason: {}", name.0, reason);
-                let entity = *entity;
-                cmd.exec_mut(move |world, resources| {
-                    remove_player(entity, world, resources);
-                });
-            }
-            ClientEvent::Move(new_pos) => {
-                position.0 = new_pos;
-            }
-            ClientEvent::Rotate(yaw, pitch) => {
-                *rotation = Rotation(yaw, pitch);
-            }
-        }
-    }
-}
+use event_receiver::receive_events_system;
 
 #[system(for_each)]
 fn keepalive(conn: &PlayerConnection) {
@@ -55,22 +31,4 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
         .add_system(accept_new_players_system());
     resources
         .insert(PlayerList::new());
-}
-
-fn remove_player(entity: Entity, world: &mut World, resources: &mut Resources) {
-    if let Some(entry) = world.entry(entity) {
-        (|| {
-            let mut list = resources.get_mut::<PlayerList>()?;
-            let uuid = entry.get_component::<Uuid>().ok()?;
-            list.remove(*uuid);
-            Some(())
-        })();
-        (|| {
-            let mut map = resources.get_mut::<SpatialHashMap>()?;
-            let hash = entry.get_component::<SpatialHash>().ok()?;
-            map.remove(&entity, hash);
-            Some(())
-        })();
-    }
-    world.remove(entity);
 }
