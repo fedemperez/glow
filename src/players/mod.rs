@@ -1,5 +1,5 @@
 mod player_list;
-mod chunk_view;
+mod chunk_viewer;
 mod new_players;
 mod entity_viewer;
 
@@ -9,7 +9,7 @@ use systems::{Builder, CommandBuffer};
 use crate::net::{ClientEvent, ServerEvent, PlayerConnection};
 use crate::util::get_time_millis;
 use player_list::{PlayerList, update_player_list_system};
-use chunk_view::update_chunk_view_system;
+use chunk_viewer::update_chunk_view_system;
 use new_players::accept_new_players_system;
 use entity_viewer::send_visible_entities_system;
 use crate::entities::{Position, Rotation, SpatialHash, SpatialHashMap};

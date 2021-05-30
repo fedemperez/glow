@@ -2,7 +2,7 @@ use legion::*;
 use systems::CommandBuffer;
 use nalgebra::Vector3;
 
-use super::chunk_view::ChunkView;
+use super::chunk_viewer::ChunkViewer;
 use super::PlayerList;
 use super::entity_viewer::EntityViewer;
 use super::{Position, Name};
@@ -32,7 +32,7 @@ pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Serv
             Rotation(0.0, 0.0),
             Name(name.clone()), 
             conn,
-            ChunkView::new(8),
+            ChunkViewer::new(8),
             EntityViewer::new(),
         ));
         list.add(uuid, name);

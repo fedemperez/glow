@@ -6,7 +6,7 @@ use super::Position;
 use super::super::chunks::{ChunkCoords, World as Chunks};
 
 #[system(for_each)]
-pub fn update_chunk_view(pos: &Position, view: &mut ChunkView, 
+pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer, 
                conn: &mut PlayerConnection, #[resource] chunks: &mut Chunks) 
 {
     if view.changed_chunk(pos.0) {
@@ -27,13 +27,13 @@ pub fn update_chunk_view(pos: &Position, view: &mut ChunkView,
     }
 }
 
-pub struct ChunkView {
+pub struct ChunkViewer {
     already_sent: HashSet<ChunkCoords>,
     last_pos: Option<Vector3<f32>>,
     range: i32,
 }
 
-impl ChunkView {
+impl ChunkViewer {
     pub fn new(range: i32) -> Self {
         Self {
             last_pos: None,
