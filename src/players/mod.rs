@@ -8,6 +8,7 @@ mod remove_player;
 use legion::*;
 use systems::Builder;
 use crate::net::PlayerConnection;
+use crate::net::packets::play::ClientboundPacket;
 use crate::util::get_time_millis;
 use crate::events::ServerEvent;
 use player_list::{PlayerList, update_player_list_system};
@@ -18,7 +19,7 @@ use event_receiver::receive_events_system;
 
 #[system(for_each)]
 fn keepalive(conn: &PlayerConnection) {
-    conn.send(ServerEvent::KeepAlive(get_time_millis()));
+    conn.send(ClientboundPacket::KeepAlive(get_time_millis()));
 }
 
 pub fn register(schedule: &mut Builder, resources: &mut Resources) {

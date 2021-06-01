@@ -1,7 +1,7 @@
 use legion::*;
 use world::SubWorld;
+use crate::net::packets::play::{ClientboundPacket, PlayerInfo};
 use crate::net::{PlayerConnection, Server};
-use crate::events::ServerEvent;
 use std::mem::take;
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -15,16 +15,28 @@ pub fn update_player_list(world: &SubWorld, #[resource] list: &mut PlayerList,
     if updates.len() > 0 {
         server.update_list(list.count(), list.get_sample());
         for update in updates {
+            let packet = match &update {
+                PlayerListUpdate::Add(uuid, name) => {
+                    ClientboundPacket::PlayerInfoAddPlayers(vec![
+                        (
+                            *uuid,
+                            PlayerInfo {
+                                name: name.clone(),
+                                properties: Vec::new(),
+                                gamemode: 0,
+                                ping: 0,
+                                display_name: None,
+                            }
+                        )
+                    ])
+                }
+                PlayerListUpdate::Remove(uuid) => {
+                    ClientboundPacket::PlayerInfoRemovePlayers(vec![*uuid])
+                }
+            };
             let mut query = <(&PlayerConnection,)>::query();
             query.for_each(world, |(conn,)| {
-                match &update {
-                    PlayerListUpdate::Add(uuid, name) => {
-                        conn.send(ServerEvent::AddPlayer(*uuid, name.clone()));
-                    }
-                    PlayerListUpdate::Remove(uuid) => {
-                        conn.send(ServerEvent::RemovePlayer(*uuid));
-                    }
-                }
+                conn.send(packet.clone());
             });
         }
     }

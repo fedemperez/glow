@@ -13,7 +13,7 @@ impl Bucket {
     pub fn new() -> Self {
         Self {
             entities: HashMap::new(),
-            events: channel(20).0,
+            events: channel(128).0,
         }
     }
 

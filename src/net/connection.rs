@@ -1,23 +1,25 @@
 use std::sync::mpsc::TryIter;
-use crate::events::{ClientEvent, ServerEvent};
+use crate::events::ClientEvent;
 use anyhow::{Result, anyhow};
 use std::sync::Mutex;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
+use super::packets::play::ClientboundPacket;
+
 pub struct PlayerConnection {
     receiver: Mutex<Receiver<ClientEvent>>,
-    sender: UnboundedSender<ServerEvent>,
+    sender: UnboundedSender<ClientboundPacket>,
 }
 
 impl PlayerConnection {
-    pub fn send(&self, ev: ServerEvent) -> Result<()> {
+    pub fn send(&self, ev: ClientboundPacket) -> Result<()> {
         self.sender.send(ev).map_err(|_| {
-            anyhow!("Tried to send an event to a closed connection")
+            anyhow!("Tried to send a packet to a closed connection")
         })
     }
 
-    pub fn get_sender(&self) -> UnboundedSender<ServerEvent> {
+    pub fn get_sender(&self) -> UnboundedSender<ClientboundPacket> {
         self.sender.clone()
     }
 
@@ -27,12 +29,12 @@ impl PlayerConnection {
 }
 
 pub struct GameConnection {
-    receiver: UnboundedReceiver<ServerEvent>,
+    receiver: UnboundedReceiver<ClientboundPacket>,
     sender: Sender<ClientEvent>,
 }
 
 impl GameConnection {
-    pub fn into_split(self) -> (UnboundedReceiver<ServerEvent>, Sender<ClientEvent>) 
+    pub fn into_split(self) -> (UnboundedReceiver<ClientboundPacket>, Sender<ClientEvent>) 
     {
         (self.receiver, self.sender)
     }

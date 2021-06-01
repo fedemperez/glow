@@ -4,7 +4,7 @@ use tokio::io::AsyncWrite;
 use super::clientbound::ClientboundPacket;
 use super::super::builder::PacketBuilder;
 
-impl<'a> ClientboundPacket<'a> {
+impl ClientboundPacket {
     pub async fn send<W>(&self, writer: &mut W) -> Result<()>
         where W: AsyncWrite + Unpin
     {
@@ -47,7 +47,7 @@ impl<'a> ClientboundPacket<'a> {
                     .add_nbt(&heightmap);
                 if let Some(biomes) = biomes {
                     packet.add_varint(biomes.len() as u32);
-                    for biome in *biomes {
+                    for biome in biomes {
                         packet.add_varint(*biome as u32);
                     }
                 }
@@ -55,7 +55,7 @@ impl<'a> ClientboundPacket<'a> {
                     .add_varint(data.len() as u32)
                     .add_bytes(data)
                     .add_varint(block_entities.len() as u32);
-                for entity in *block_entities {
+                for entity in block_entities {
                     packet.add_nbt(entity);
                 }
                 packet.write(writer).await
@@ -87,7 +87,7 @@ impl<'a> ClientboundPacket<'a> {
                 packet
                     .add_varint(0)
                     .add_varint(players.len() as u32);
-                for (uuid, info) in *players {
+                for (uuid, info) in players {
                     packet
                         .add_bytes(uuid.as_bytes())
                         .add_str(info.name.as_str())
@@ -103,7 +103,6 @@ impl<'a> ClientboundPacket<'a> {
                             }
                             None => { packet.add_bytes(&[0]); }
                         }
-                        
                     }
                     packet
                         .add_varint(info.gamemode as u32)
@@ -128,7 +127,7 @@ impl<'a> ClientboundPacket<'a> {
                 let mut packet = PacketBuilder::new(0x32);
                 packet.add_varint(4)
                     .add_varint(players.len() as u32);
-                for uuid in *players {
+                for uuid in players {
                     packet.add_bytes(uuid.as_bytes());
                 }
                 packet.write(writer).await
@@ -164,7 +163,7 @@ impl<'a> ClientboundPacket<'a> {
             Self::DestroyEntities(entities) => {
                 let mut packet = PacketBuilder::new(0x36);
                 packet.add_varint(entities.len() as u32);
-                for entity in *entities {
+                for entity in entities {
                     packet.add_varint(*entity);
                 }
                 packet.write(writer).await

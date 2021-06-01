@@ -34,6 +34,5 @@ pub enum EntityEvent {
     RotateHead {
         id: u32,
         yaw: f32,
-        pitch: f32,
     }
 }

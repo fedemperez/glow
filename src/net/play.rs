@@ -4,7 +4,7 @@ use anyhow::Result;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::events::{ClientEvent, ServerEvent};
+use crate::events::ClientEvent;
 use super::dimension_codec::{gen_dimension_codec, gen_default_dim};
 use super::connection::GameConnection;
 use super::packets::errors::UnknownPacket;
@@ -38,12 +38,12 @@ async fn client_to_game<R>(mut tcp: R, game: &mut Sender<ClientEvent>)
     }
 }
 
-async fn game_to_client<W>(mut game: UnboundedReceiver<ServerEvent>, mut tcp: W) -> Result<()>
-    where W: AsyncWrite + Unpin
+async fn game_to_client<W>(mut game: UnboundedReceiver<ClientboundPacket>, mut tcp: W) 
+    -> Result<()> where W: AsyncWrite + Unpin
 {
     send_initial_packets(&mut tcp).await;
-    while let Some(event) = game.recv().await {
-        send_packets(&event, &mut tcp).await;
+    while let Some(packet) = game.recv().await {
+        packet.send(&mut tcp).await?;
     }
     Ok(())
 }
@@ -57,7 +57,7 @@ fn send_events(packet: &ServerboundPacket, sender: &mut Sender<ClientEvent>) {
     sender.send(event);
 }
 
-async fn send_packets<W>(event: &ServerEvent, sender: &mut W) -> Result<()>
+/*async fn send_packets<W>(event: &ServerEvent, sender: &mut W) -> Result<()>
     where W: AsyncWrite + Unpin 
 {
     match event {
@@ -75,7 +75,7 @@ async fn send_packets<W>(event: &ServerEvent, sender: &mut W) -> Result<()>
         ServerEvent::SpawnPlayer(_, _, _) => {}
     }
     Ok(())
-}
+}*/
 
 async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
     where W: AsyncWrite + Unpin 
@@ -88,7 +88,7 @@ async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
         view_distance: 6,
     }.send(writer).await?;
     ClientboundPacket::PluginMessage {
-        channel: "minecraft:brand",
-        content: BRAND.as_bytes(),
+        channel: "minecraft:brand".into(),
+        content: BRAND.as_bytes().into(),
     }.send(writer).await
 }

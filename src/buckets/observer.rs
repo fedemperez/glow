@@ -28,25 +28,30 @@ impl Observer {
         -> Vec<EntityEvent>
     {
         let mut events = vec![];
-        for receiver in self.observed.values() {
+        for receiver in self.observed.values_mut() {
             while let Ok(event) = receiver.try_recv() {
-                match event {
-                    EntityEvent::MoveInto{ entity, id, old, from, to } => {
-                        if !self.observed.contains_key(&old) {
-                            events.push(EntityEvent::Appear{ entity });
-                        } else {
-                            events.push(EntityEvent::Move{ id, from, to });
-                        }
-                    }
-                    EntityEvent::MoveAway{ id, to } => {
-                        if !self.observed.contains_key(&to) {
-                            events.push(EntityEvent::Disappear{ id });
-                        }
-                    }
-                    event => events.push(event),
-                };
+                events.push(event);
             }
         }
+        events = events.into_iter().filter_map(|event|
+            match event {
+                EntityEvent::MoveInto{ entity, id, old, from, to } => {
+                    if !self.observed.contains_key(&old) {
+                        Some(EntityEvent::Appear{ entity })
+                    } else {
+                        Some(EntityEvent::Move{ id, from, to })
+                    }
+                }
+                EntityEvent::MoveAway{ id, to } => {
+                    if !self.observed.contains_key(&to) {
+                        Some(EntityEvent::Disappear{ id })
+                    } else {
+                        None
+                    }
+                }
+                event => Some(event),
+            }
+        ).collect();
         self.move_to(pos, tracker, &mut events);
         events
     }
@@ -65,12 +70,13 @@ impl Observer {
                         tracker.subscribe(&coords)
                     },
                 };
-                new_observed.insert(&coords, receiver);
+                new_observed.insert(coords, receiver);
             }
             for coords in self.observed.keys() {
                 self.remove_bucket(coords, tracker, events);
             }
             self.coords = new_coords;
+            self.observed = new_observed;
         }
     }
 

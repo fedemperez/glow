@@ -1,6 +1,7 @@
 use nbt::Value as Nbt;
 use uuid::Uuid;
 
+#[derive(Clone)]
 pub struct PlayerInfo {
     pub name: String,
     pub properties: Vec<PlayerInfoProperty>,
@@ -9,13 +10,15 @@ pub struct PlayerInfo {
     pub display_name: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct PlayerInfoProperty {
     pub name: String,
     pub value: String,
     pub signature: Option<String>,
 }
 
-pub enum ClientboundPacket<'a> {
+#[derive(Clone)]
+pub enum ClientboundPacket {
     JoinGame {
         entity_id: u32,
         gamemode: u8,
@@ -24,8 +27,8 @@ pub enum ClientboundPacket<'a> {
         view_distance: u8,
     },
     PluginMessage {
-        channel: &'a str,
-        content: &'a[u8],
+        channel: String,
+        content: Vec<u8>,
     },
     ChunkData {
         x: i32,
@@ -33,17 +36,17 @@ pub enum ClientboundPacket<'a> {
         full: bool,
         bitmask: u16,
         heightmap: Nbt,
-        biomes: Option<&'a[u32]>,
-        data: &'a[u8],
-        block_entities: &'a[Nbt],
+        biomes: Option<Vec<u16>>,
+        data: Vec<u8>,
+        block_entities: Vec<Nbt>,
     },
     KeepAlive(u64),
-    PlayerPosition(f32, f32, f32),
+    PlayerPosition(f64, f64, f64),
     UpdateViewPosition(i32, i32),
-    PlayerInfoAddPlayers(&'a[(Uuid, PlayerInfo)]),
-    PlayerInfoUpdateGamemode(&'a[(Uuid, u8)]),
-    PlayerInfoUpdateLatency(&'a[(Uuid, u16)]),
-    PlayerInfoRemovePlayers(&'a[Uuid]),
+    PlayerInfoAddPlayers(Vec<(Uuid, PlayerInfo)>),
+    PlayerInfoUpdateGamemode(Vec<(Uuid, u8)>),
+    PlayerInfoUpdateLatency(Vec<(Uuid, u16)>),
+    PlayerInfoRemovePlayers(Vec<Uuid>),
     EntityTeleport {
         id: u32,
         x: f64,
@@ -70,7 +73,7 @@ pub enum ClientboundPacket<'a> {
         id: u32,
         yaw: f32,
     },
-    DestroyEntities(&'a[u32]),
+    DestroyEntities(Vec<u32>),
     SpawnPlayer {
        entity_id: u32,
        uuid: Uuid,
