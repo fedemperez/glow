@@ -5,6 +5,7 @@ mod config;
 mod util;
 mod entities;
 mod events;
+mod buckets;
 
 use std::time::{Duration, Instant};
 
@@ -27,6 +28,7 @@ async fn main() -> Result<()> {
     chunks::register(&mut schedule, &mut resources);
     players::register(&mut schedule, &mut resources);
     entities::register(&mut schedule, &mut resources);
+    buckets::register(&mut schedule, &mut resources);
     let mut schedule = schedule.build();
     let mut world = World::default();
     loop {

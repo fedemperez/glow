@@ -1,6 +1,6 @@
 mod handshaking;
 mod status;
-mod packets;
+pub mod packets;
 mod login;
 mod play;
 mod dimension_codec;

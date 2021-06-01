@@ -1,7 +1,8 @@
 use legion::*;
 use uuid::Uuid;
+use crate::{buckets::EntityTracker, entities::{EntityId, Position}};
+
 use super::PlayerList;
-use crate::entities::{SpatialHash, SpatialHashMap};
 
 pub fn remove_player(entity: Entity, world: &mut World, resources: &mut Resources) {
     if let Some(entry) = world.entry(entity) {
@@ -12,9 +13,10 @@ pub fn remove_player(entity: Entity, world: &mut World, resources: &mut Resource
             Some(())
         })();
         (|| {
-            let mut map = resources.get_mut::<SpatialHashMap>()?;
-            let hash = entry.get_component::<SpatialHash>().ok()?;
-            map.remove(&entity, hash);
+            let mut tracker = resources.get_mut::<EntityTracker>()?;
+            let id = entry.get_component::<EntityId>().ok()?;
+            let pos = entry.get_component::<Position>().ok()?;
+            tracker.remove(id.0, &pos.0);
             Some(())
         })();
     }
