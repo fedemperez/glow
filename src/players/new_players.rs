@@ -45,7 +45,7 @@ pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Serv
             Name(name.clone()), 
             conn,
             ChunkViewer::new(8),
-            Observer::new(&position, 6),
+            Observer::new(&position, 16*6),
         ));
         list.add(uuid, name);
         tracker.add(id.0, entity, &position);

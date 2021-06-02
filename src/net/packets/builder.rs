@@ -40,6 +40,12 @@ impl PacketBuilder {
         self
     }
 
+    pub fn add_position_delta(&mut self, delta: f32) -> &mut Self {
+        let delta = (delta * 4096.0) as i16;
+        self.add_bytes(&delta.to_be_bytes());
+        self
+    }
+
     pub async fn write<W: AsyncWrite>(&self, writer: &mut W) -> Result<()>
         where W: Unpin
     {
