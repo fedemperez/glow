@@ -1,6 +1,8 @@
 use super::block::Block;
+use super::events::ChunkEvent;
 use super::section::{Section, SECTION_LENGTH};
 use std::iter::repeat_with;
+use std::sync::{Arc, Mutex};
 use nbt::{Value, Map};
 use crate::util::{compacted_long, push_varint};
 
@@ -9,6 +11,7 @@ pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
 
 pub struct Chunk {
     sections: Vec<Option<Section>>,
+    subscribers: Vec<Box<dyn Fn(ChunkEvent) + Send + Sync>>,
 }
 
 impl Chunk {
@@ -17,6 +20,7 @@ impl Chunk {
             sections: repeat_with(|| None)
                 .take(CHUNK_HEIGHT / SECTION_LENGTH)
                 .collect(),
+            subscribers: vec![],
         }
     }
 
@@ -41,6 +45,21 @@ impl Chunk {
                 new_sect.set_block(x, y % SECTION_LENGTH, z, block);
                 self.sections[section] = Some(new_sect);
             }
+        }
+        self.emit_event(ChunkEvent::BlockChanged {
+            x, y, z, new: block,
+        });
+    }
+
+    pub fn subscribe<F>(&mut self, callback: F)
+        where F: Fn(ChunkEvent) + 'static + Send + Sync
+    {
+        self.subscribers.push(Box::new(callback));
+    }
+
+    fn emit_event(&self, event: ChunkEvent) {
+        for callback in &self.subscribers {
+            callback(event.clone());
         }
     }
 

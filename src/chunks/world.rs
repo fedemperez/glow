@@ -1,6 +1,7 @@
 use super::Block;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
+use super::events::ChunkEvent;
 use anyhow::{anyhow, Result};
 use std::{collections::HashMap, future::Future};
 use super::chunk_source::ChunkSource;
@@ -21,8 +22,8 @@ impl World {
         }
     }
 
-    pub fn get_chunk(&self, coords: ChunkCoords)
-        -> impl Future<Output=Result<Arc<RwLock<Chunk>>>> 
+    pub fn subscribe<F>(&self, coords: ChunkCoords, callback: F)
+        -> impl Future<Output=()> where F: Fn(ChunkEvent) + 'static + Send + Sync
     {
         let chunks = self.chunks.clone();
         let sources = self.chunk_sources.clone();
@@ -30,17 +31,22 @@ impl World {
             let chunk = chunks.read().unwrap()
                 .get(&coords).map(|c| c.clone());
             match chunk {
-                Some(chunk) => Ok(chunk),
+                Some(chunk) => {
+                    callback(ChunkEvent::ChunkLoaded{ chunk: chunk.clone() });
+                    chunk.write().unwrap().subscribe(callback);
+                },
                 None => {
                     for source in &*sources {
                         if let Some(chunk) = source.load_chunk(coords).await {
                             let chunk = Arc::new(RwLock::new(chunk));
                             chunks.write().unwrap()
                                 .insert(coords, chunk.clone());
-                            return Ok(chunk);
+                            callback(ChunkEvent::ChunkLoaded{ chunk: chunk.clone() });
+                            chunk.write().unwrap().subscribe(callback);
+                            return;
                         }
                     }
-                    Err(anyhow!("No chunk source could load chunk at {:?}", coords))
+                    eprintln!("No chunk source could load chunk at {:?}", coords);
                 }
             }
         }

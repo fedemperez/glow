@@ -5,6 +5,7 @@ mod chunk_source;
 mod world;
 mod coords;
 mod flat_generator;
+pub mod events;
 
 pub use chunk::Chunk;
 pub use block::Block;

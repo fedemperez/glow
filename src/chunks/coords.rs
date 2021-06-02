@@ -15,10 +15,20 @@ impl ChunkCoords {
         Self(x.div_floor(&(CHUNK_WIDTH as i32)), z.div_floor(&(CHUNK_WIDTH as i32)))
     }
 
-    pub fn relative(&self, x: i32, y: i32, z: i32) -> (usize, usize, usize) {
+    pub fn relative(&self, x: i32, y: i32, z: i32)
+        -> (usize, usize, usize)
+    {
         let x = x - self.0 * 16;
         let z = z - self.1 * 16;
         (x as usize, y as usize, z as usize)
+    }
+
+    pub fn global(&self, x: usize, y: usize, z: usize) 
+        -> (i32, i32, i32) 
+    {
+        let x = x as i32 + self.0 * 16;
+        let z = z as i32 + self.1 * 16;
+        (x, y as i32, z)
     }
 
     pub fn get_close(&self, chunk_distance: i32) -> Vec<Self> {

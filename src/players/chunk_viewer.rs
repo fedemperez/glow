@@ -4,6 +4,7 @@ use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 use nalgebra::Vector3;
 use crate::chunks::Chunk;
+use crate::chunks::events::ChunkEvent;
 use crate::net::PlayerConnection;
 use crate::entities::Position;
 use crate::chunks::{ChunkCoords, World as Chunks};
@@ -18,22 +19,33 @@ pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer,
         conn.send(ClientboundPacket::UpdateViewPosition(chunk_x, chunk_y));
         let needed = view.get_needed(pos.0);
         for coords in needed {
-            let future = chunks.get_chunk(coords);
             let sender = conn.get_sender();
-            tokio::spawn(async move {
-                match future.await {
-                    Ok(chunk) => {
-                        send_chunk(&sender, coords, chunk);
-                    }
-                    Err(e) => eprintln!("Error loading chunk: {:?}", e),
+            tokio::spawn(chunks.subscribe(coords, 
+                move |event| {
+                    handle_chunk_event(&sender, coords, event);
                 }
-            });
+            ));
         }
     }
 }
 
-fn send_chunk(sender: &UnboundedSender<ClientboundPacket>, coords: ChunkCoords,
-    chunk: Arc<RwLock<Chunk>>)
+fn handle_chunk_event(sender: &UnboundedSender<ClientboundPacket>, 
+    coords: ChunkCoords, event: ChunkEvent)
+{
+    match event {
+        ChunkEvent::ChunkLoaded { chunk } 
+            => send_chunk(&sender, coords, chunk),
+        ChunkEvent::BlockChanged { x, y, z, new } => {
+            let (x, y, z) = coords.global(x, y, z);
+            sender.send(ClientboundPacket::BlockChange {
+                x, y, z, block_state: new.get_id() as u32,
+            });
+        },
+    }
+}
+
+fn send_chunk(sender: &UnboundedSender<ClientboundPacket>, 
+    coords: ChunkCoords, chunk: Arc<RwLock<Chunk>>)
 {
     let chunk = chunk.read().unwrap();
     sender.send(ClientboundPacket::ChunkData{

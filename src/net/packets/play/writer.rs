@@ -185,6 +185,12 @@ impl ClientboundPacket {
                     .add_angle(*pitch)
                     .write(writer).await
             }
+            Self::BlockChange{ x, y, z, block_state } => {
+                PacketBuilder::new(0x0B)
+                    .add_block_position(*x, *y, *z)
+                    .add_varint(*block_state)
+                    .write(writer).await
+            }
         }
     }
 }

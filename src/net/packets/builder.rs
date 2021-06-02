@@ -46,6 +46,15 @@ impl PacketBuilder {
         self
     }
 
+    pub fn add_block_position(&mut self, x: i32, y: i32, z: i32)
+        -> &mut Self
+    {
+        let pos = ((x as i64 & 0x3FFFFFF) << 38) | ((z as i64 & 0x3FFFFFF) << 12) | 
+            (y as i64 & 0xFFF);
+        self.add_bytes(&pos.to_be_bytes());
+        self
+    }
+
     pub async fn write<W: AsyncWrite>(&self, writer: &mut W) -> Result<()>
         where W: Unpin
     {

@@ -10,7 +10,6 @@ use crate::entities::{Name, Position};
 use crate::entities::EntityIdGenerator;
 use crate::entities::Rotation;
 use crate::net::Server;
-use crate::events::ServerEvent;
 use crate::net::packets::play::{ClientboundPacket, PlayerInfo};
 
 const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);

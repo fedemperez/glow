@@ -83,4 +83,10 @@ pub enum ClientboundPacket {
        yaw: f32,
        pitch: f32,
     },
+    BlockChange {
+        x: i32,
+        y: i32,
+        z: i32,
+        block_state: u32,
+    }
 }

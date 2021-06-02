@@ -57,26 +57,6 @@ fn send_events(packet: &ServerboundPacket, sender: &mut Sender<ClientEvent>) {
     sender.send(event);
 }
 
-/*async fn send_packets<W>(event: &ServerEvent, sender: &mut W) -> Result<()>
-    where W: AsyncWrite + Unpin 
-{
-    match event {
-        ServerEvent::LoadChunk(_, _) => {}
-        ServerEvent::KeepAlive(_) => {}
-        ServerEvent::PlayerPosition(_) => {}
-        ServerEvent::ChunkPosition(_) => {}
-        ServerEvent::AddPlayer(_, _) => {}
-        ServerEvent::RemovePlayer(_) => {}
-        ServerEvent::EntityTeleported(_, _, _) => {}
-        ServerEvent::EntityMoved(_, _) => {}
-        ServerEvent::EntityRotated(_, _) => {}
-        ServerEvent::EntityHeadRotated(_, _) => {}
-        ServerEvent::DestroyEntities(_) => {}
-        ServerEvent::SpawnPlayer(_, _, _) => {}
-    }
-    Ok(())
-}*/
-
 async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
     where W: AsyncWrite + Unpin 
 {
