@@ -6,13 +6,14 @@ use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
 use crate::events::ClientEvent;
+use crate::chunks::{Block, World as ChunkWorld};
 use super::remove_player::remove_player;
 use crate::entities::Name;
 
 #[system(for_each)]
 pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnection, 
-    name: &Name, position: &mut Position, rotation: &mut Rotation,
-    cmd: &mut CommandBuffer, #[resource] tracker: &mut EntityTracker) 
+    name: &Name, position: &mut Position, rotation: &mut Rotation, cmd: &mut CommandBuffer, 
+    #[resource] chunks: &ChunkWorld, #[resource] tracker: &mut EntityTracker) 
 {
     for event in conn.receive() {
         match event {
@@ -37,7 +38,7 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 *rotation = Rotation(yaw, pitch);
             }
             ClientEvent::BreakBlock(x, y, z) => {
-                println!("Alguien rompio un bloquesito en {}, {}, {}", x, y, z);
+                chunks.set_block(x, y, z, Block::Air);
             }
         }
     }

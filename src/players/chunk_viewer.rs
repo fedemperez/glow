@@ -1,8 +1,7 @@
 use legion::*;
 use tokio::sync::mpsc::UnboundedSender;
 use std::collections::HashSet;
-use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::sync::{Arc, RwLock};
 use nalgebra::Vector3;
 use crate::chunks::Chunk;
 use crate::net::PlayerConnection;
@@ -12,7 +11,7 @@ use crate::net::packets::play::ClientboundPacket;
 
 #[system(for_each)]
 pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer, 
-               conn: &mut PlayerConnection, #[resource] chunks: &mut Chunks) 
+               conn: &mut PlayerConnection, #[resource] chunks: &Chunks) 
 {
     if view.changed_chunk(pos.0) {
         let ChunkCoords(chunk_x, chunk_y) = ChunkCoords::from_pos(pos.0);
@@ -24,7 +23,7 @@ pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer,
             tokio::spawn(async move {
                 match future.await {
                     Ok(chunk) => {
-                        send_chunk(&sender, coords, chunk).await;
+                        send_chunk(&sender, coords, chunk);
                     }
                     Err(e) => eprintln!("Error loading chunk: {:?}", e),
                 }
@@ -33,10 +32,10 @@ pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer,
     }
 }
 
-async fn send_chunk(sender: &UnboundedSender<ClientboundPacket>, coords: ChunkCoords,
+fn send_chunk(sender: &UnboundedSender<ClientboundPacket>, coords: ChunkCoords,
     chunk: Arc<RwLock<Chunk>>)
 {
-    let chunk = chunk.read().await;
+    let chunk = chunk.read().unwrap();
     sender.send(ClientboundPacket::ChunkData{
         x: coords.0,
         z: coords.1,
@@ -75,13 +74,10 @@ impl ChunkViewer {
 
     pub fn get_needed(&mut self, pos: Vector3<f32>) -> Vec<ChunkCoords> {
         let mut needed = vec![];
-        let ChunkCoords(x, z) = ChunkCoords::from_pos(pos);
-        for delta_x in -self.range..self.range {
-            for delta_z in -self.range..self.range {
-                let coords = ChunkCoords(x + delta_x, z + delta_z);
-                if self.already_sent.insert(coords) {
-                    needed.push(coords);
-                }
+        let around = ChunkCoords::from_pos(pos).get_close(self.range);
+        for coords in around {
+            if self.already_sent.insert(coords) {
+                needed.push(coords);
             }
         }
         self.last_pos = Some(pos);
