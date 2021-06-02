@@ -31,8 +31,8 @@ impl ClientboundPacket {
             }
             Self::PluginMessage { channel, content } => {
                 PacketBuilder::new(0x17)
-                    .add_str("minecraft:brand")
-                    .add_bytes(content)
+                    .add_str(channel.as_str())
+                    .add_str(content.as_str())
                     .write(writer).await
             }
             Self::ChunkData

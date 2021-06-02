@@ -28,7 +28,7 @@ pub enum ClientboundPacket {
     },
     PluginMessage {
         channel: String,
-        content: Vec<u8>,
+        content: String,
     },
     ChunkData {
         x: i32,

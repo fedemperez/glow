@@ -89,6 +89,6 @@ async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
     }.send(writer).await?;
     ClientboundPacket::PluginMessage {
         channel: "minecraft:brand".into(),
-        content: BRAND.as_bytes().into(),
+        content: BRAND.into(),
     }.send(writer).await
 }

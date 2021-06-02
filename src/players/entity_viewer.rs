@@ -8,8 +8,6 @@ use crate::entities::{EntityId, Position, Rotation};
 use crate::net::PlayerConnection;
 use crate::net::packets::play::ClientboundPacket;
 
-const VIEW_RANGE: u32 = 6 * 16;
-
 #[system]
 #[read_component(Uuid)]
 #[read_component(EntityId)]
