@@ -17,7 +17,7 @@ const VIEW_RANGE: u32 = 6 * 16;
 #[read_component(Rotation)]
 #[read_component(PlayerConnection)]
 #[write_component(Observer)]
-pub fn send_visible_entities(world: &mut SubWorld, #[resource] tracker: &EntityTracker) {
+pub fn send_entity_events(world: &mut SubWorld, #[resource] tracker: &EntityTracker) {
     let mut pending_spawns = HashMap::new();
     let mut query = <(&EntityId, &Position, &PlayerConnection, &mut Observer)>::query();
     for (player_id, pos, conn, observer) in query.iter_mut(world) {
