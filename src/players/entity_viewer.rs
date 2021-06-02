@@ -3,9 +3,9 @@ use uuid::Uuid;
 use legion::*;
 use world::SubWorld;
 use crate::buckets::{EntityTracker, Observer};
+use crate::buckets::events::{EntityEvent, EntityEventData};
 use crate::entities::{EntityId, Position, Rotation};
 use crate::net::PlayerConnection;
-use crate::buckets::EntityEvent;
 use crate::net::packets::play::ClientboundPacket;
 
 const VIEW_RANGE: u32 = 6 * 16;
@@ -19,17 +19,21 @@ const VIEW_RANGE: u32 = 6 * 16;
 #[write_component(Observer)]
 pub fn send_visible_entities(world: &mut SubWorld, #[resource] tracker: &EntityTracker) {
     let mut pending_spawns = HashMap::new();
-    let mut query = <(&Position, &PlayerConnection, &mut Observer)>::query();
-    for (pos, conn, observer) in query.iter_mut(world) {
+    let mut query = <(&EntityId, &Position, &PlayerConnection, &mut Observer)>::query();
+    for (player_id, pos, conn, observer) in query.iter_mut(world) {
         let events = observer.update(&pos.0, tracker);
         for event in events {
-            match event {
-                EntityEvent::Appear { entity } => {
-                    pending_spawns.entry(entity)
-                        .or_insert(vec![])
-                        .push(conn.get_sender());
-                },
-                event => { send_event(event, conn); }
+            if event.id != player_id.0 {
+                match event {
+                    EntityEvent{
+                        data: EntityEventData::Appear { entity }, ..
+                    } => {
+                        pending_spawns.entry(entity)
+                            .or_insert(vec![])
+                            .push(conn.get_sender());
+                    },
+                    event => { send_event(event, conn); }
+                }
             }
         }
     }
@@ -54,11 +58,12 @@ pub fn send_visible_entities(world: &mut SubWorld, #[resource] tracker: &EntityT
 }
 
 fn send_event(event: EntityEvent, conn: &PlayerConnection) {
-    match event {
-        EntityEvent::Disappear { id } => {
+    let EntityEvent{ id, data } = event;
+    match data {
+        EntityEventData::Disappear => {
             conn.send(ClientboundPacket::DestroyEntities(vec![id]));
         },
-        EntityEvent::Move { id, from, to } => {
+        EntityEventData::Move { from, to } => {
             conn.send(ClientboundPacket::EntityTeleport {
                 id,
                 x: to.x as f64,
@@ -69,7 +74,7 @@ fn send_event(event: EntityEvent, conn: &PlayerConnection) {
                 on_ground: true,
             });
         },
-        EntityEvent::Rotate { id, yaw, pitch } => {
+        EntityEventData::Rotate { yaw, pitch } => {
             conn.send(ClientboundPacket::EntityRotation {
                 id,
                 yaw,
@@ -77,7 +82,7 @@ fn send_event(event: EntityEvent, conn: &PlayerConnection) {
                 on_ground: true,
             });
         },
-        EntityEvent::RotateHead { id, yaw } => {
+        EntityEventData::RotateHead { yaw } => {
             conn.send(ClientboundPacket::EntityHeadLook { id, yaw });
         },
         _ => panic!("Invalid event")

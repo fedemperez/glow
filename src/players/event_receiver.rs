@@ -1,6 +1,7 @@
 use legion::*;
 use systems::{CommandBuffer};
-use crate::buckets::{EntityTracker, EntityEvent};
+use crate::buckets::EntityTracker;
+use crate::buckets::events::{EntityEvent, EntityEventData};
 use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
@@ -28,7 +29,10 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             }
             ClientEvent::Rotate(yaw, pitch) => {
                 tracker.send_event(&position.0, 
-                    EntityEvent::Rotate{ id: id.0, pitch, yaw }
+                    EntityEvent {
+                        id: id.0,
+                        data: EntityEventData::Rotate{ pitch, yaw },
+                    }
                 );
                 *rotation = Rotation(yaw, pitch);
             }

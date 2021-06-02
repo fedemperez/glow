@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use nalgebra::Vector3;
 use tokio::sync::broadcast::Receiver;
 
+use crate::buckets::events::EntityEventData;
+
 use super::{
     coords::BucketCoords, 
     events::EntityEvent, 
@@ -33,27 +35,46 @@ impl Observer {
                 events.push(event);
             }
         }
-        events = events.into_iter().filter_map(|event|
-            match event {
-                EntityEvent::MoveInto{ entity, id, old, from, to } => {
-                    if !self.observed.contains_key(&old) {
-                        Some(EntityEvent::Appear{ entity })
-                    } else {
-                        Some(EntityEvent::Move{ id, from, to })
-                    }
-                }
-                EntityEvent::MoveAway{ id, to } => {
-                    if !self.observed.contains_key(&to) {
-                        Some(EntityEvent::Disappear{ id })
-                    } else {
-                        None
-                    }
-                }
-                event => Some(event),
-            }
-        ).collect();
+        let mut events = events.into_iter()
+            .filter_map(|event| self.relativize_move_events(event))
+            .collect();
         self.move_to(pos, tracker, &mut events);
         events
+    }
+
+    fn relativize_move_events(&self, event: EntityEvent) -> Option<EntityEvent> {
+        match event {
+            EntityEvent { 
+                id, 
+                data: EntityEventData::MoveInto{ entity, old, from, to }
+            } => {
+                if !self.observed.contains_key(&old) {
+                    Some(EntityEvent {
+                        id,
+                        data: EntityEventData::Appear{ entity },
+                    })
+                } else {
+                    Some(EntityEvent {
+                        id,
+                        data: EntityEventData::Move{ from, to },
+                    })
+                }
+            }
+            EntityEvent {
+                id,
+                data: EntityEventData::MoveAway{ to },
+            } => {
+                if !self.observed.contains_key(&to) {
+                    Some(EntityEvent {
+                        id,
+                        data: EntityEventData::Disappear,
+                    })
+                } else {
+                    None
+                }
+            }
+            event => Some(event),
+        }
     }
 
     fn move_to(&mut self, pos: &Vector3<f32>, tracker: &EntityTracker, 
@@ -83,8 +104,11 @@ impl Observer {
     fn add_bucket(&self, coords: &BucketCoords, tracker: &EntityTracker,
         events: &mut Vec<EntityEvent>) 
     {
-        for (_, entity) in tracker.get_entities(coords) {
-            events.push(EntityEvent::Appear { entity });
+        for (id, entity) in tracker.get_entities(coords) {
+            events.push(EntityEvent {
+                id,
+                data: EntityEventData::Appear{ entity },
+            });
         }
     }
 
@@ -92,7 +116,10 @@ impl Observer {
         events: &mut Vec<EntityEvent>) 
     {
         for (id, _) in tracker.get_entities(coords) {
-            events.push(EntityEvent::Disappear { id });
+            events.push(EntityEvent { 
+                id,
+                data: EntityEventData::Disappear,
+            });
         }
     }
 }

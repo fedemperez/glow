@@ -3,7 +3,7 @@ use nalgebra::Vector3;
 use legion::*;
 use tokio::sync::broadcast::Receiver;
 
-use super::{bucket::Bucket, coords::BucketCoords, events::EntityEvent};
+use super::{bucket::Bucket, coords::BucketCoords, events::{EntityEvent, EntityEventData}};
 
 pub struct EntityTracker {
     buckets: RwLock<HashMap<BucketCoords, Arc<RwLock<Bucket>>>>,
@@ -21,7 +21,10 @@ impl EntityTracker {
         let bucket = self.get_or_create(&coords);
         let mut bucket = bucket.write().unwrap();
         bucket.add(id, entity);
-        bucket.send_event(EntityEvent::Appear{ entity });
+        bucket.send_event(EntityEvent { 
+            id,
+            data: EntityEventData::Appear{ entity }
+        });
     }
 
     pub fn remove(&self, id: u32, pos: &Vector3<f32>) {
@@ -29,7 +32,10 @@ impl EntityTracker {
         if let Some(bucket) = self.buckets.read().unwrap().get(&coords) {
             let mut bucket = bucket.write().unwrap();
             bucket.remove(id);
-            bucket.send_event(EntityEvent::Disappear{ id });
+            bucket.send_event(EntityEvent {
+                id,
+                data: EntityEventData::Disappear,
+            });
         }
     }
 
@@ -38,28 +44,33 @@ impl EntityTracker {
         let new_coords = BucketCoords::from_pos(&to);
         if old_coords == new_coords {
             self.get_or_create(&new_coords).read().unwrap().send_event(
-                EntityEvent::Move{ id, from, to }
-            );
+                EntityEvent{ 
+                    id, 
+                    data: EntityEventData::Move{ from, to }
+                });
         } else {
             {
                 let old_bucket = self.get_or_create(&old_coords);
                 let mut old_bucket = old_bucket.write().unwrap();
                 old_bucket.remove(id);
                 old_bucket.send_event(
-                    EntityEvent::MoveAway{ id, to: new_coords }
-                );
+                    EntityEvent {
+                        id,
+                        data: EntityEventData::MoveAway{ to: new_coords },
+                    });
             }
             let new_bucket = self.get_or_create(&new_coords);
             let mut new_bucket = new_bucket.write().unwrap();
             new_bucket.add(id, entity);
             new_bucket.send_event(
-                EntityEvent::MoveInto{
-                    entity,
+                EntityEvent {
                     id,
-                    old: old_coords,
-                    from, to,
-                }
-            );
+                    data: EntityEventData::MoveInto{ 
+                        entity, 
+                        old: old_coords,
+                        from, to,
+                    }
+                });
         }
     }
 
