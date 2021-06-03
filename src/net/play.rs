@@ -1,10 +1,8 @@
-use nalgebra::Vector3;
 use tokio::net::TcpStream;
 use anyhow::Result;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, BufReader};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
-use crate::events::ClientEvent;
 use super::dimension_codec::{gen_dimension_codec, gen_default_dim};
 use super::connection::GameConnection;
 use super::packets::errors::UnknownPacket;
@@ -20,17 +18,20 @@ pub async fn play(conn: TcpStream, game: GameConnection) -> Result<()> {
     Ok(())
 }
 
-async fn client_to_game<R>(mut tcp: R, game: &mut Sender<ClientEvent>)
+async fn client_to_game<R>(tcp: R, sender: &mut Sender<ServerboundPacket>)
     where R: AsyncRead + Unpin
 {
+    let mut tcp = BufReader::with_capacity(256, tcp);
     loop {
         match ServerboundPacket::read(&mut tcp).await {
             Ok(packet) => {
-                send_events(&packet, game);
+                sender.send(packet);
             }
             Err(error) => {
                 if !error.is::<UnknownPacket>() {
-                    game.send(ClientEvent::Disconnect(error.to_string()));
+                    sender.send(ServerboundPacket::Disconnect {
+                        message: error.to_string(),
+                    });
                     break;
                 }
             }
@@ -46,15 +47,6 @@ async fn game_to_client<W>(mut game: UnboundedReceiver<ClientboundPacket>, mut t
         packet.send(&mut tcp).await?;
     }
     Ok(())
-}
-
-fn send_events(packet: &ServerboundPacket, sender: &mut Sender<ClientEvent>) {
-    let event = match *packet {
-        ServerboundPacket::Move(x, y, z) => ClientEvent::Move(Vector3::new(x, y, z)),
-        ServerboundPacket::Rotate(yaw, pitch) => ClientEvent::Rotate(yaw, pitch),
-        ServerboundPacket::BreakBlock(x, y, z) => ClientEvent::BreakBlock(x, y, z),
-    };
-    sender.send(event);
 }
 
 async fn send_initial_packets<W>(writer: &mut W) -> Result<()>

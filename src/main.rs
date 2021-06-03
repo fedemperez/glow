@@ -4,7 +4,6 @@ mod chunks;
 mod config;
 mod util;
 mod entities;
-mod events;
 mod buckets;
 
 use std::time::{Duration, Instant};

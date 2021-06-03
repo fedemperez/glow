@@ -1,6 +1,6 @@
 use legion::*;
 use systems::CommandBuffer;
-use nalgebra::Vector3;
+use nalgebra::{vector, Vector3};
 
 use super::chunk_viewer::ChunkViewer;
 use super::PlayerList;
@@ -12,7 +12,7 @@ use crate::entities::Rotation;
 use crate::net::Server;
 use crate::net::packets::play::{ClientboundPacket, PlayerInfo};
 
-const SPAWN_POSITION: Vector3<f32> = Vector3::new(0.0, 2.0, 0.0);
+const SPAWN_POSITION: Vector3<f32> = vector!(0.0, 2.0, 0.0);
 
 #[system]
 pub fn accept_new_players(cmd: &mut CommandBuffer, #[resource] server: &mut Server, 

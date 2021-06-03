@@ -152,6 +152,19 @@ impl ClientboundPacket {
                     .add_bytes(&[*on_ground as u8])
                     .write(writer).await
             }
+            Self::EntityPositionAndRotation { 
+                id, delta_x, delta_y, delta_z, yaw, pitch, on_ground
+            } => {
+                PacketBuilder::new(0x29)
+                    .add_varint(*id)
+                    .add_position_delta(*delta_x)
+                    .add_position_delta(*delta_y)
+                    .add_position_delta(*delta_z)
+                    .add_angle(*yaw)
+                    .add_angle(*pitch)
+                    .add_bytes(&[*on_ground as u8])
+                    .write(writer).await
+            }
             Self::EntityRotation{ id, yaw, pitch, on_ground } => {
                 PacketBuilder::new(0x29)
                     .add_varint(*id)

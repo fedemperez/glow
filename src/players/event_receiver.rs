@@ -1,11 +1,12 @@
 use legion::*;
+use nalgebra::vector;
 use systems::{CommandBuffer};
 use crate::buckets::EntityTracker;
 use crate::buckets::events::{EntityEvent, EntityEventData};
 use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
-use crate::events::ClientEvent;
+use crate::net::packets::play::ServerboundPacket;
 use crate::chunks::{Block, World as ChunkWorld};
 use super::remove_player::remove_player;
 use crate::entities::Name;
@@ -17,18 +18,12 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
 {
     for event in conn.receive() {
         match event {
-            ClientEvent::Disconnect(reason) => {
-                println!("{} disconnected, reason: {}", name.0, reason);
-                let entity = *entity;
-                cmd.exec_mut(move |world, resources| {
-                    remove_player(entity, world, resources);
-                });
-            }
-            ClientEvent::Move(new_pos) => {
+            ServerboundPacket::PlayerPosition { x, y, z, .. } => {
+                let new_pos = vector!(x as f32, y as f32, z as f32);
                 tracker.move_entity(id.0, *entity, position.0, new_pos);
                 position.0 = new_pos;
-            }
-            ClientEvent::Rotate(yaw, pitch) => {
+            },
+            ServerboundPacket::PlayerRotation { yaw, pitch, .. } => {
                 tracker.send_event(&position.0, 
                     EntityEvent {
                         id: id.0,
@@ -36,10 +31,27 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                     }
                 );
                 *rotation = Rotation(yaw, pitch);
-            }
-            ClientEvent::BreakBlock(x, y, z) => {
-                chunks.set_block(x, y, z, Block::Air);
-            }
+            },
+            ServerboundPacket::PlayerPositionAndRotation {
+                x, y, z, yaw, pitch, ..
+            } => {
+
+            },
+            ServerboundPacket::PlayerDigging {
+                status, position: (x, y, z), face
+            } => {
+                match status {
+                    2 => chunks.set_block(x, y, z, Block::Air),
+                    _ => (),
+                }
+            },
+            ServerboundPacket::Disconnect { message } => {
+                println!("{} disconnected, reason: {}", name.0, message);
+                let entity = *entity;
+                cmd.exec_mut(move |world, resources| {
+                    remove_player(entity, world, resources);
+                });
+            },
         }
     }
 }

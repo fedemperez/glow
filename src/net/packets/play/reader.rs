@@ -15,28 +15,40 @@ impl ServerboundPacket {
         let id = reader.read_u8().await?;
         match id {
             0x12 => {
-                let x = f64::from_bits(reader.read_u64().await?) as f32;
-                let y = f64::from_bits(reader.read_u64().await?) as f32;
-                let z = f64::from_bits(reader.read_u64().await?) as f32;
+                let x = f64::from_bits(reader.read_u64().await?);
+                let y = f64::from_bits(reader.read_u64().await?);
+                let z = f64::from_bits(reader.read_u64().await?);
                 let on_ground = reader.read_u8().await? != 0;
-                Ok(Self::Move(x, y, z))
+                Ok(Self::PlayerPosition {
+                    x, y, z, on_ground
+                })
+            }
+            0x13 => {
+                let x = f64::from_bits(reader.read_u64().await?);
+                let y = f64::from_bits(reader.read_u64().await?);
+                let z = f64::from_bits(reader.read_u64().await?);
+                let yaw = f32::from_bits(reader.read_u32().await?);
+                let pitch = f32::from_bits(reader.read_u32().await?);
+                let on_ground = reader.read_u8().await? != 0;
+                Ok(Self::PlayerPositionAndRotation {
+                    x, y, z, yaw, pitch, on_ground
+                })
             }
             0x14 => {
                 let yaw = f32::from_bits(reader.read_u32().await?);
                 let pitch = f32::from_bits(reader.read_u32().await?);
                 let on_ground = reader.read_u8().await? != 0;
-                Ok(Self::Rotate(yaw, pitch))
+                Ok(Self::PlayerRotation {
+                    yaw, pitch, on_ground
+                })
             }
             0x1B => {
                 let status = reader.read_u8().await?;
-                let (x, y, z) = read_block_pos(reader).await?;
+                let position = read_block_pos(reader).await?;
                 let face = reader.read_u8().await?;
-                match status {
-                    0 => {
-                        Ok(Self::BreakBlock(x, y, z))
-                    }
-                    _ => Err(UnknownPacket(id).into()),
-                }
+                Ok(Self::PlayerDigging {
+                    status, position, face
+                })
             }
             id => {
                 let mut buffer = vec![0; length - 1];

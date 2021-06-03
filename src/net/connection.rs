@@ -1,14 +1,13 @@
 use std::sync::mpsc::TryIter;
-use crate::events::ClientEvent;
 use anyhow::{Result, anyhow};
 use std::sync::Mutex;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
-use super::packets::play::ClientboundPacket;
+use super::packets::play::{ServerboundPacket, ClientboundPacket};
 
 pub struct PlayerConnection {
-    receiver: Mutex<Receiver<ClientEvent>>,
+    receiver: Mutex<Receiver<ServerboundPacket>>,
     sender: UnboundedSender<ClientboundPacket>,
 }
 
@@ -23,18 +22,19 @@ impl PlayerConnection {
         self.sender.clone()
     }
 
-    pub fn receive(&mut self) -> TryIter<'_, ClientEvent> {
+    pub fn receive(&mut self) -> TryIter<'_, ServerboundPacket> {
         self.receiver.get_mut().unwrap().try_iter()
     }
 }
 
 pub struct GameConnection {
     receiver: UnboundedReceiver<ClientboundPacket>,
-    sender: Sender<ClientEvent>,
+    sender: Sender<ServerboundPacket>,
 }
 
 impl GameConnection {
-    pub fn into_split(self) -> (UnboundedReceiver<ClientboundPacket>, Sender<ClientEvent>) 
+    pub fn into_split(self)
+        -> (UnboundedReceiver<ClientboundPacket>, Sender<ServerboundPacket>) 
     {
         (self.receiver, self.sender)
     }

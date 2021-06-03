@@ -63,6 +63,15 @@ pub enum ClientboundPacket {
         delta_z: f32,
         on_ground: bool,
     },
+    EntityPositionAndRotation {
+        id: u32, 
+        delta_x: f32,
+        delta_y: f32,
+        delta_z: f32,
+        yaw: f32,
+        pitch: f32,
+        on_ground: bool,
+    },
     EntityRotation {
         id: u32, 
         yaw: f32,
