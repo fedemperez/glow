@@ -50,6 +50,7 @@ async fn listen(port: u16, motd: String, player_sender: Sender<(Uuid, String, Pl
     let mut player_list = vec![];
     loop {
         let (conn, address) = listener.accept().await?;
+        conn.set_nodelay(true).unwrap();
         println!("New connection from {}", address);
         for (count, list) in list_updates.try_iter() {
             player_list = list;

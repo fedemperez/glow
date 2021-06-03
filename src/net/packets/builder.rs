@@ -58,10 +58,10 @@ impl PacketBuilder {
     pub async fn write<W: AsyncWrite>(&self, writer: &mut W) -> Result<()>
         where W: Unpin
     {
-        let mut length = vec![];
-        push_varint(self.bytes.len() as u32, &mut length);
-        writer.write_all(length.as_slice()).await?;
-        writer.write_all(self.bytes.as_slice()).await?;
+        let mut packet = Vec::with_capacity(self.bytes.len() + 5);
+        push_varint(self.bytes.len() as u32, &mut packet);
+        packet.extend(self.bytes.iter());
+        writer.write_all(packet.as_slice()).await?;
         Ok(())
     }
 }
