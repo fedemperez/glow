@@ -46,6 +46,7 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 x, y, z, yaw, pitch, ..
             } => {
                 let new_position = vector!(x, y, z);
+                tracker.move_entity(id.0, *entity, position.0, new_position);
                 tracker.send_event(&new_position, 
                     EntityEvent {
                         id: id.0,
