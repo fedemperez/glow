@@ -1,4 +1,10 @@
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::collections::HashMap;
+use anyhow::Result;
+use nbt::Value;
+use tokio::io::AsyncWriteExt;
+use tokio::{fs::File, io::AsyncReadExt};
 
 pub fn compacted_long(values: Vec<u16>, bits_per_value: u32) -> Vec<i64> {
     let mut result = Vec::with_capacity(values.len() / (64 / bits_per_value as usize));
@@ -41,6 +47,23 @@ pub fn get_time_millis() -> u64 {
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
     since_epoch.as_millis() as u64
+}
+
+pub async fn read_file(path: impl AsRef<Path>) 
+    -> Result<Vec<u8>>
+{
+    let mut file = File::open(path).await?;
+    let mut data = vec![];
+    file.read_to_end(&mut data).await?;
+    Ok(data)
+}
+
+pub async fn write_file(path: impl AsRef<Path>, data: &[u8])
+    -> Result<()>
+{
+    let mut file = File::create(path).await?;
+    file.write_all(data).await?;
+    Ok(())
 }
 
 #[cfg(test)]

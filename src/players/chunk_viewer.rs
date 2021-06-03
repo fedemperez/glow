@@ -62,7 +62,7 @@ fn send_chunk(sender: &UnboundedSender<ClientboundPacket>,
 
 pub struct ChunkViewer {
     already_sent: HashSet<ChunkCoords>,
-    last_pos: Option<Vector3<f32>>,
+    last_pos: Option<Vector3<f64>>,
     range: i32,
 }
 
@@ -75,7 +75,7 @@ impl ChunkViewer {
         }
     }
 
-    pub fn changed_chunk(&self, new_pos: Vector3<f32>) -> bool {
+    pub fn changed_chunk(&self, new_pos: Vector3<f64>) -> bool {
         match self.last_pos {
             Some(last_pos) => {
                 ChunkCoords::from_pos(last_pos) != ChunkCoords::from_pos(new_pos)
@@ -84,7 +84,7 @@ impl ChunkViewer {
         }
     }
 
-    pub fn get_needed(&mut self, pos: Vector3<f32>) -> Vec<ChunkCoords> {
+    pub fn get_needed(&mut self, pos: Vector3<f64>) -> Vec<ChunkCoords> {
         let mut needed = vec![];
         let around = ChunkCoords::from_pos(pos).get_close(self.range);
         for coords in around {

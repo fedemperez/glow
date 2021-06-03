@@ -45,9 +45,9 @@ pub fn send_entity_events(world: &mut SubWorld, #[resource] tracker: &EntityTrac
             sender.send(ClientboundPacket::SpawnPlayer {
                 entity_id,
                 uuid,
-                x: position.x as f64,
-                y: position.y as f64,
-                z: position.z as f64,
+                x: position.x,
+                y: position.y,
+                z: position.z,
                 yaw: rotation.0,
                 pitch: rotation.1,
             });

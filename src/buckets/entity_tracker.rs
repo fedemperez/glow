@@ -16,7 +16,7 @@ impl EntityTracker {
         }
     }
 
-    pub fn add(&self, id: u32, entity: Entity, pos: &Vector3<f32>) {
+    pub fn add(&self, id: u32, entity: Entity, pos: &Vector3<f64>) {
         let coords = BucketCoords::from_pos(pos);
         let bucket = self.get_or_create(&coords);
         let mut bucket = bucket.write().unwrap();
@@ -27,7 +27,7 @@ impl EntityTracker {
         });
     }
 
-    pub fn remove(&self, id: u32, pos: &Vector3<f32>) {
+    pub fn remove(&self, id: u32, pos: &Vector3<f64>) {
         let coords = BucketCoords::from_pos(pos);
         if let Some(bucket) = self.buckets.read().unwrap().get(&coords) {
             let mut bucket = bucket.write().unwrap();
@@ -39,7 +39,7 @@ impl EntityTracker {
         }
     }
 
-    pub fn move_entity(&self, id: u32, entity: Entity, from: Vector3<f32>, to: Vector3<f32>) {
+    pub fn move_entity(&self, id: u32, entity: Entity, from: Vector3<f64>, to: Vector3<f64>) {
         let old_coords = BucketCoords::from_pos(&from);
         let new_coords = BucketCoords::from_pos(&to);
         if old_coords != new_coords {
@@ -67,7 +67,7 @@ impl EntityTracker {
         }
     }
 
-    pub fn send_event(&self, pos: &Vector3<f32>, event: EntityEvent) {
+    pub fn send_event(&self, pos: &Vector3<f64>, event: EntityEvent) {
         let coords = BucketCoords::from_pos(pos);
         if let Some(bucket) = self.buckets.read().unwrap().get(&coords) {
             bucket.read().unwrap().send_event(event);

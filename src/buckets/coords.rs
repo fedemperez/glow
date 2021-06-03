@@ -7,7 +7,7 @@ pub const BUCKET_SIZE: u32 = 16;
 pub struct BucketCoords(i32, i32);
 
 impl BucketCoords {
-    pub fn from_pos(pos: &Vector3<f32>) -> Self {
+    pub fn from_pos(pos: &Vector3<f64>) -> Self {
         Self((pos.x.floor() as i32).div_floor(&(BUCKET_SIZE as i32)),
              (pos.z.floor() as i32).div_floor(&(BUCKET_SIZE as i32)))
     }

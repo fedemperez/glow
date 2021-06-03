@@ -24,6 +24,6 @@ pub enum ServerboundPacket {
         face: u8,
     },
     Disconnect {
-        message: String,
+        reason: String,
     },
 }

@@ -1,4 +1,5 @@
 use legion::*;
+use tokio::sync::mpsc::UnboundedSender;
 use world::SubWorld;
 use crate::net::packets::play::{ClientboundPacket, PlayerInfo};
 use crate::net::{PlayerConnection, Server};
@@ -84,6 +85,20 @@ impl PlayerList {
 
     pub fn get_players(&self) -> &HashMap<Uuid, String> {
         &self.players
+    }
+
+    pub fn send_player(&self, sender: &UnboundedSender<ClientboundPacket>) {
+        let players = self.get_players().into_iter().map(|(uuid, name)| (
+            *uuid,
+            PlayerInfo {
+                name: name.clone(),
+                properties: Vec::new(),
+                gamemode: 0,
+                ping: 0,
+                display_name: None,
+            }
+        )).collect();
+        sender.send(ClientboundPacket::PlayerInfoAddPlayers(players));
     }
 }
 

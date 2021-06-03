@@ -26,7 +26,7 @@ impl Observer {
         }
     }
 
-    pub fn update(&mut self, pos: &Vector3<f32>, tracker: &EntityTracker)
+    pub fn update(&mut self, pos: &Vector3<f64>, tracker: &EntityTracker)
         -> Vec<EntityEvent>
     {
         let mut events = vec![];
@@ -74,7 +74,7 @@ impl Observer {
         }
     }
 
-    fn move_to(&mut self, pos: &Vector3<f32>, tracker: &EntityTracker, 
+    fn move_to(&mut self, pos: &Vector3<f64>, tracker: &EntityTracker, 
         events: &mut Vec<EntityEvent>) 
     {
         let new_coords = BucketCoords::from_pos(pos);

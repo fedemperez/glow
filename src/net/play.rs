@@ -30,7 +30,7 @@ async fn client_to_game<R>(tcp: R, sender: &mut Sender<ServerboundPacket>)
             Err(error) => {
                 if !error.is::<UnknownPacket>() {
                     sender.send(ServerboundPacket::Disconnect {
-                        message: error.to_string(),
+                        reason: error.to_string(),
                     });
                     break;
                 }
