@@ -12,15 +12,15 @@ use super::{
 };
 
 pub struct Observer {
-    coords: BucketCoords,
+    last_coords: Option<BucketCoords>,
     distance: u32,
     observed: HashMap<BucketCoords, Receiver<EntityEvent>>,
 }
 
 impl Observer {
-    pub fn new(pos: &Vector3<f32>, distance: u32) -> Self {
+    pub fn new(distance: u32) -> Self {
         Self {
-            coords: BucketCoords::from_pos(pos),
+            last_coords: None,
             distance,
             observed: HashMap::new(),
         }
@@ -78,7 +78,7 @@ impl Observer {
         events: &mut Vec<EntityEvent>) 
     {
         let new_coords = BucketCoords::from_pos(pos);
-        if new_coords != self.coords {
+        if Some(new_coords) != self.last_coords {
             let mut new_observed = HashMap::new();
             for coords in new_coords.get_close(self.distance) {
                 let receiver = match self.observed.remove(&coords) {
@@ -93,7 +93,7 @@ impl Observer {
             for coords in self.observed.keys() {
                 self.remove_bucket(coords, tracker, events);
             }
-            self.coords = new_coords;
+            self.last_coords = Some(new_coords);
             self.observed = new_observed;
         }
     }

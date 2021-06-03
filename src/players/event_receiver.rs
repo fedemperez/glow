@@ -36,6 +36,12 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                         data: EntityEventData::Rotate{ pitch, yaw },
                     }
                 );
+                tracker.send_event(&position.0, 
+                    EntityEvent {
+                        id: id.0,
+                        data: EntityEventData::RotateHead{ yaw },
+                    }
+                );
                 *rotation = Rotation(yaw, pitch);
             },
             ServerboundPacket::PlayerPositionAndRotation {
@@ -50,6 +56,12 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                             yaw,
                             pitch,
                         }
+                    }
+                );
+                tracker.send_event(&position.0, 
+                    EntityEvent {
+                        id: id.0,
+                        data: EntityEventData::RotateHead{ yaw },
                     }
                 );
                 position.0 = new_position;
