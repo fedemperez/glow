@@ -19,9 +19,15 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
     for event in conn.receive() {
         match event {
             ServerboundPacket::PlayerPosition { x, y, z, .. } => {
-                let new_pos = vector!(x as f32, y as f32, z as f32);
-                tracker.move_entity(id.0, *entity, position.0, new_pos);
-                position.0 = new_pos;
+                let new_position = vector!(x as f32, y as f32, z as f32);
+                tracker.move_entity(id.0, *entity, position.0, new_position);
+                tracker.send_event(&new_position, EntityEvent {
+                    id: id.0,
+                    data: EntityEventData::Move {
+                        delta: new_position - position.0,
+                    }
+                });
+                position.0 = new_position;
             },
             ServerboundPacket::PlayerRotation { yaw, pitch, .. } => {
                 tracker.send_event(&position.0, 
@@ -35,13 +41,29 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             ServerboundPacket::PlayerPositionAndRotation {
                 x, y, z, yaw, pitch, ..
             } => {
-
+                let new_position = vector!(x as f32, y as f32, z as f32);
+                tracker.send_event(&new_position, 
+                    EntityEvent {
+                        id: id.0,
+                        data: EntityEventData::MoveRotate {
+                            delta: new_position - position.0,
+                            yaw,
+                            pitch,
+                        }
+                    }
+                );
+                position.0 = new_position;
             },
             ServerboundPacket::PlayerDigging {
                 status, position: (x, y, z), face
             } => {
                 match status {
-                    2 => chunks.set_block(x, y, z, Block::Air),
+                    0 => {
+                        chunks.set_block(x, y, z, Block::Air);
+                    },
+                    2 => {
+                        chunks.set_block(x, y, z, Block::Air);
+                    },
                     _ => (),
                 }
             },

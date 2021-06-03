@@ -155,7 +155,7 @@ impl ClientboundPacket {
             Self::EntityPositionAndRotation { 
                 id, delta_x, delta_y, delta_z, yaw, pitch, on_ground
             } => {
-                PacketBuilder::new(0x29)
+                PacketBuilder::new(0x28)
                     .add_varint(*id)
                     .add_position_delta(*delta_x)
                     .add_position_delta(*delta_y)

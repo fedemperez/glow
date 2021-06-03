@@ -42,13 +42,7 @@ impl EntityTracker {
     pub fn move_entity(&self, id: u32, entity: Entity, from: Vector3<f32>, to: Vector3<f32>) {
         let old_coords = BucketCoords::from_pos(&from);
         let new_coords = BucketCoords::from_pos(&to);
-        if old_coords == new_coords {
-            self.get_or_create(&new_coords).read().unwrap().send_event(
-                EntityEvent{ 
-                    id, 
-                    data: EntityEventData::Move{ from, to }
-                });
-        } else {
+        if old_coords != new_coords {
             {
                 let old_bucket = self.get_or_create(&old_coords);
                 let mut old_bucket = old_bucket.write().unwrap();
@@ -67,8 +61,7 @@ impl EntityTracker {
                     id,
                     data: EntityEventData::MoveInto{ 
                         entity, 
-                        old: old_coords,
-                        from, to,
+                        from: old_coords,
                     }
                 });
         }

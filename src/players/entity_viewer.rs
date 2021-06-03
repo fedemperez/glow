@@ -61,13 +61,23 @@ fn send_event(event: EntityEvent, conn: &PlayerConnection) {
         EntityEventData::Disappear => {
             conn.send(ClientboundPacket::DestroyEntities(vec![id]));
         },
-        EntityEventData::Move { from, to } => {
-            let delta = to - from;
+        EntityEventData::Move { delta } => {
             conn.send(ClientboundPacket::EntityPosition {
                 id,
                 delta_x: delta.x,
                 delta_y: delta.y,
                 delta_z: delta.z,
+                on_ground: true,
+            });
+        },
+        EntityEventData::MoveRotate { delta, yaw, pitch } => {
+            conn.send(ClientboundPacket::EntityPositionAndRotation {
+                id,
+                delta_x: delta.x,
+                delta_y: delta.y,
+                delta_z: delta.z,
+                yaw,
+                pitch,
                 on_ground: true,
             });
         },

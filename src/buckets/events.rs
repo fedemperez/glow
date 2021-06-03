@@ -15,17 +15,19 @@ pub enum EntityEventData {
     },
     Disappear,
     Move {
-        from: Vector3<f32>,
-        to: Vector3<f32>,
+        delta: Vector3<f32>,
     },
     MoveAway {
         to: BucketCoords,
     },
     MoveInto {
         entity: Entity,
-        old: BucketCoords,
-        from: Vector3<f32>,
-        to: Vector3<f32>,
+        from: BucketCoords,
+    },
+    MoveRotate {
+        delta: Vector3<f32>,
+        yaw: f32,
+        pitch: f32,
     },
     Rotate {
         yaw: f32,
