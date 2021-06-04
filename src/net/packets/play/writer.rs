@@ -204,6 +204,20 @@ impl ClientboundPacket {
                     .add_varint(*block_state)
                     .write(writer).await
             }
+            Self::WindowItems{ window, items } => {
+                let mut pack = PacketBuilder::new(0x13);
+                pack.add_bytes(&[*window])
+                    .add_bytes(&(items.len() as u16).to_be_bytes());
+                for item in items {
+                    pack.add_bytes(&[item.is_some() as u8]);
+                    if let Some(item) = item {
+                        pack.add_varint(item.id);
+                        pack.add_bytes(&[item.count]);
+                        pack.add_bytes(&[0]);
+                    }
+                }
+                pack.write(writer).await
+            }
         }
     }
 }

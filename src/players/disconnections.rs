@@ -7,6 +7,7 @@ use systems::CommandBuffer;
 use world::SubWorld;
 use crate::buckets::EntityTracker;
 use crate::entities::{EntityId, Position, Rotation};
+use crate::inventory::Inventory;
 use crate::players::player_data::PlayerData;
 
 use super::player_list::PlayerList;
@@ -36,6 +37,7 @@ impl DisconnectionQueue {
 #[read_component(Uuid)]
 #[read_component(Position)]
 #[read_component(Rotation)]
+#[read_component(Inventory)]
 pub fn handle_disconnections(world: &mut SubWorld, #[resource] tracker: &EntityTracker, 
     #[resource] queue: &DisconnectionQueue, cmd: &mut CommandBuffer) 
 {
@@ -46,9 +48,11 @@ pub fn handle_disconnections(world: &mut SubWorld, #[resource] tracker: &EntityT
         let uuid = *entry.get_component::<Uuid>().unwrap();
         let position = entry.get_component::<Position>().unwrap().0;
         let rotation = entry.get_component::<Rotation>().unwrap();
+        let inventory = entry.get_component::<Inventory>().unwrap().clone();
         let data = PlayerData {
             pos: position,
             rotation: (rotation.0, rotation.1),
+            inventory,
         };
         tokio::spawn(async move {
             data.save(uuid).await

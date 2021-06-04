@@ -1,3 +1,7 @@
+use nbt::Value as Nbt;
+
+use crate::inventory::ItemStack;
+
 pub enum ServerboundPacket {
     PlayerPosition {
         x: f64, 
@@ -22,6 +26,10 @@ pub enum ServerboundPacket {
         status: u8,
         position: (i32, i32, i32),
         face: u8,
+    },
+    CreativeInventoryAction {
+        slot: u16,
+        stack: Option<ItemStack>,
     },
     Disconnect {
         reason: String,

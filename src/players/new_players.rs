@@ -18,6 +18,7 @@ use crate::entities::Rotation;
 use crate::net::PlayerConnection;
 use crate::net::Server;
 use crate::net::packets::play::ClientboundPacket;
+use crate::inventory::Inventory;
 
 pub struct JoiningPlayer {
     uuid: Uuid,
@@ -48,6 +49,10 @@ pub fn join_players(cmd: &mut CommandBuffer, #[resource] queue: &mut JoiningPlay
     for JoiningPlayer{ uuid, name, conn, data } in queue.receiver.try_iter() {
         conn.send(ClientboundPacket::PlayerPosition(
             data.pos.x, data.pos.y, data.pos.z));
+        conn.send(ClientboundPacket::WindowItems{
+            window: 0,
+            items: data.inventory.get_window(),
+        });
         list.send_player(&conn.get_sender());
         let id = entity_id_gen.get_new();
         list.add(uuid, name.clone());
@@ -56,7 +61,8 @@ pub fn join_players(cmd: &mut CommandBuffer, #[resource] queue: &mut JoiningPlay
             uuid,
             Position(data.pos),
             Rotation(data.rotation.0, data.rotation.1),
-            Name(name), 
+            Name(name),
+            data.inventory,
             conn,
             ChunkViewer::new(8),
             Observer::new(16*6),
@@ -87,5 +93,6 @@ fn gen_new_player() -> PlayerData {
     PlayerData {
         pos: vector!(0.0, 2.0, 0.0),
         rotation: (0.0, 0.0),
+        inventory: Inventory::new(),
     }
 }

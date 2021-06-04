@@ -5,6 +5,7 @@ mod config;
 mod util;
 mod entities;
 mod buckets;
+mod inventory;
 
 use std::time::{Duration, Instant};
 

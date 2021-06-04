@@ -1,6 +1,8 @@
 use nbt::Value as Nbt;
 use uuid::Uuid;
 
+use crate::inventory::ItemStack;
+
 #[derive(Clone)]
 pub struct PlayerInfo {
     pub name: String,
@@ -97,5 +99,9 @@ pub enum ClientboundPacket {
         y: i32,
         z: i32,
         block_state: u32,
+    },
+    WindowItems {
+        window: u8,
+        items: Vec<Option<ItemStack>>,
     }
 }

@@ -8,11 +8,13 @@ use crate::entities::{Position, Rotation};
 use crate::net::packets::play::ServerboundPacket;
 use crate::chunks::{Block, World as ChunkWorld};
 use super::disconnections::DisconnectionQueue;
+use crate::inventory::{Inventory, ItemStack, SlotIndex};
 
 #[system(for_each)]
 pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnection, 
-    position: &mut Position, rotation: &mut Rotation, #[resource] chunks: &ChunkWorld, 
-    #[resource] disconnections: &DisconnectionQueue, #[resource] tracker: &mut EntityTracker) 
+    position: &mut Position, rotation: &mut Rotation, inventory: &mut Inventory,
+    #[resource] chunks: &ChunkWorld, #[resource] disconnections: &DisconnectionQueue, 
+    #[resource] tracker: &mut EntityTracker) 
 {
     for event in conn.receive() {
         match event {
@@ -77,6 +79,12 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                     },
                     _ => (),
                 }
+            },
+            ServerboundPacket::CreativeInventoryAction {
+                slot, stack
+            } => {
+                let index = SlotIndex::from_network(slot as u8);
+                inventory.set_slot(index, stack);
             },
             ServerboundPacket::Disconnect { reason } => {
                 disconnections.send(*entity, reason);
