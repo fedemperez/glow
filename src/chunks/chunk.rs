@@ -1,4 +1,4 @@
-use super::block::Block;
+use crate::common::block::Block;
 use super::events::ChunkEvent;
 use super::section::{Section, SECTION_LENGTH};
 use std::iter::repeat_with;
@@ -30,7 +30,7 @@ impl Chunk {
             Some(section) => {
                 section.get_block(x, y % SECTION_LENGTH, z)
             }
-            None => Block::Air
+            None => Block::from_name("minecraft:air").unwrap(),
         }
     }
 

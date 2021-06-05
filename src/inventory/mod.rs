@@ -1,6 +1,6 @@
 mod serialization;
-mod id_conversion;
-use nbt::Value as Nbt;
+
+use crate::common::item_stack::ItemStack;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serialization::ItemStackPlayerData;
@@ -9,19 +9,14 @@ use serialization::ItemStackPlayerData;
 #[serde(try_from = "Vec<ItemStackPlayerData>")]
 #[serde(into = "Vec<ItemStackPlayerData>")]
 pub struct Inventory {
+    held_slot: SlotIndex,
     slots: HashMap<SlotIndex, ItemStack>,
-}
-
-#[derive(Clone, Debug)]
-pub struct ItemStack {
-    pub id: u32,
-    pub count: u8,
-    pub nbt: Option<Nbt>,
 }
 
 impl Inventory {
     pub fn new() -> Self {
         Self {
+            held_slot: SlotIndex::from_hotbar(0),
             slots: HashMap::new(),
         }
     }
@@ -34,6 +29,14 @@ impl Inventory {
         } else {
             self.slots.remove(&index);
         }
+    }
+
+    pub fn set_held_slot(&mut self, slot: SlotIndex) {
+        self.held_slot = slot;
+    }
+
+    pub fn get_held(&self) -> Option<&ItemStack> {
+        self.slots.get(&self.held_slot)
     }
 
     pub fn get_window(&self) -> Vec<Option<ItemStack>> {
@@ -59,6 +62,10 @@ impl SlotIndex {
 
     pub fn from_file(index: i8) -> Self {
         Self(index as u8)
+    }
+
+    pub fn from_hotbar(index: u8) -> Self {
+        Self(index)
     }
 
     pub fn to_file(&self) -> i8 {

@@ -2,7 +2,11 @@ use std::io::Cursor;
 
 use tokio::io::{AsyncRead, AsyncReadExt};
 use anyhow::{Result, anyhow};
-use crate::inventory::ItemStack;
+use crate::common::{
+    item_stack::{ItemStack, ItemId},
+    block::BlockFace,
+};
+use num_traits::FromPrimitive;
 
 use super::super::errors::UnknownPacket;
 use super::serverbound::ServerboundPacket;
@@ -56,6 +60,12 @@ impl ServerboundPacket {
                     status, position, face
                 })
             }
+            0x25 => {
+                let slot = payload.read_u16().await?;
+                Ok(Self::HeldItemChange {
+                    slot,
+                })
+            }
             0x28 => {
                 let slot = payload.read_u16().await?;
                 let stack = if payload.read_u8().await? == 0 {
@@ -64,13 +74,28 @@ impl ServerboundPacket {
                     let id = read_varint(&mut payload).await?;
                     let count = payload.read_u8().await?;
                     Some(ItemStack {
-                        id,
+                        id: ItemId::from_numeric(id),
                         count,
                         nbt: None,
                     })
                 };
                 Ok(Self::CreativeInventoryAction {
                     slot, stack
+                })
+            }
+            0x2E => {
+                let hand = read_varint(&mut payload).await? as u8;
+                let location = read_block_pos(&mut payload).await?;
+                let face = read_varint(&mut payload).await?;
+                let cursor_x = f32::from_bits(payload.read_u32().await?);
+                let cursor_y = f32::from_bits(payload.read_u32().await?);
+                let cursor_z = f32::from_bits(payload.read_u32().await?);
+                let inside_block = payload.read_u8().await? != 0;
+                Ok(Self::PlayerBlockPlacement {
+                    hand, location, inside_block,
+                    face: FromPrimitive::from_u32(face)
+                        .ok_or(anyhow!("Invalid packet"))?, 
+                    cursor_position: (cursor_x, cursor_y, cursor_z),
                 })
             }
             id => Err(UnknownPacket(id).into()),

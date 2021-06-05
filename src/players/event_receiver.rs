@@ -6,9 +6,10 @@ use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
 use crate::net::packets::play::ServerboundPacket;
-use crate::chunks::{Block, World as ChunkWorld};
+use crate::chunks::World as ChunkWorld;
+use crate::common::block::Block;
 use super::disconnections::DisconnectionQueue;
-use crate::inventory::{Inventory, ItemStack, SlotIndex};
+use crate::inventory::{Inventory, SlotIndex};
 
 #[system(for_each)]
 pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnection, 
@@ -72,19 +73,37 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             } => {
                 match status {
                     0 => {
-                        chunks.set_block(x, y, z, Block::Air);
+                        chunks.set_block(x, y, z, 
+                            Block::from_name("minecraft:air").unwrap());
                     },
                     2 => {
-                        chunks.set_block(x, y, z, Block::Air);
+                        chunks.set_block(x, y, z, 
+                            Block::from_name("minecraft:air").unwrap());
                     },
                     _ => (),
                 }
+            },
+            ServerboundPacket::HeldItemChange { slot } => {
+                inventory.set_held_slot(
+                    SlotIndex::from_hotbar(slot as u8));
             },
             ServerboundPacket::CreativeInventoryAction {
                 slot, stack
             } => {
                 let index = SlotIndex::from_network(slot as u8);
                 inventory.set_slot(index, stack);
+            },
+            ServerboundPacket::PlayerBlockPlacement {
+                hand, location, face, ..
+            } => {
+                let (x, y, z) = face.get_adjacent(location);
+                if let Some(item) = inventory.get_held() {
+                    if let Some(block) = 
+                        Block::from_name(item.id.to_str().unwrap()) 
+                    {
+                        chunks.set_block(x, y, z, block)
+                    }
+                }
             },
             ServerboundPacket::Disconnect { reason } => {
                 disconnections.send(*entity, reason);

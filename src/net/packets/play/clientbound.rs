@@ -1,7 +1,7 @@
 use nbt::Value as Nbt;
 use uuid::Uuid;
 
-use crate::inventory::ItemStack;
+use crate::common::item_stack::ItemStack;
 
 #[derive(Clone)]
 pub struct PlayerInfo {

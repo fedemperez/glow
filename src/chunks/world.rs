@@ -1,4 +1,4 @@
-use super::Block;
+use crate::common::block::Block;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
 use super::events::ChunkEvent;
@@ -61,7 +61,7 @@ impl World {
             let (x, y, z) = coords.relative(x, y, z);
             chunk.read().unwrap().get_block(x, y, z)
         } else {
-            Block::Air
+            Block::from_name("minecraft:air").unwrap()
         }
     }
 

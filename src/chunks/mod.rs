@@ -1,4 +1,3 @@
-mod block;
 mod chunk;
 mod section;
 mod chunk_source;
@@ -8,7 +7,6 @@ mod flat_generator;
 pub mod events;
 
 pub use chunk::Chunk;
-pub use block::Block;
 pub use coords::ChunkCoords;
 pub use world::World;
 use legion::{Resources, systems::Builder};

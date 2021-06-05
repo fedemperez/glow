@@ -1,6 +1,8 @@
 use nbt::Value as Nbt;
-
-use crate::inventory::ItemStack;
+use crate::common::{
+    item_stack::ItemStack,
+    block::BlockFace,
+};
 
 pub enum ServerboundPacket {
     PlayerPosition {
@@ -27,9 +29,19 @@ pub enum ServerboundPacket {
         position: (i32, i32, i32),
         face: u8,
     },
+    HeldItemChange {
+        slot: u16,
+    },
     CreativeInventoryAction {
         slot: u16,
         stack: Option<ItemStack>,
+    },
+    PlayerBlockPlacement {
+        hand: u8,
+        location: (i32, i32, i32),
+        face: BlockFace,
+        cursor_position: (f32, f32, f32),
+        inside_block: bool,
     },
     Disconnect {
         reason: String,

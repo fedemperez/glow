@@ -211,7 +211,7 @@ impl ClientboundPacket {
                 for item in items {
                     pack.add_bytes(&[item.is_some() as u8]);
                     if let Some(item) = item {
-                        pack.add_varint(item.id);
+                        pack.add_varint(item.id.to_numeric());
                         pack.add_bytes(&[item.count]);
                         pack.add_bytes(&[0]);
                     }

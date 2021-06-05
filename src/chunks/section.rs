@@ -1,4 +1,4 @@
-use super::block::Block;
+use crate::common::block::Block;
 use crate::util::compacted_long;
 
 pub const SECTION_LENGTH: usize = 16;
@@ -12,7 +12,7 @@ pub struct Section {
 impl Section {
     pub fn new() -> Self {
         Self {
-            blocks: vec![Block::Air; BLOCKS_PER_SECTION],
+            blocks: vec![Block::from_name("minecraft:air").unwrap(); BLOCKS_PER_SECTION],
         }
     }
 
