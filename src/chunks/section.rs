@@ -1,3 +1,5 @@
+use block_macro::block_id;
+
 use crate::common::block::Block;
 use crate::util::compacted_long;
 
@@ -12,7 +14,7 @@ pub struct Section {
 impl Section {
     pub fn new() -> Self {
         Self {
-            blocks: vec![Block::from_name("minecraft:air").unwrap(); BLOCKS_PER_SECTION],
+            blocks: vec![Block(block_id!(air)); BLOCKS_PER_SECTION],
         }
     }
 
@@ -30,7 +32,7 @@ impl Section {
 
     fn get_data(&self) -> Vec<u16> {
         (&self.blocks).into_iter().map(|block| {
-            block.get_id()
+            block.0
         }).collect()
     }
 

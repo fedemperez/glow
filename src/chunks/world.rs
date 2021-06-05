@@ -3,6 +3,7 @@ use super::chunk::Chunk;
 use super::coords::ChunkCoords;
 use super::events::ChunkEvent;
 use anyhow::{anyhow, Result};
+use block_macro::block_id;
 use std::{collections::HashMap, future::Future};
 use super::chunk_source::ChunkSource;
 use std::sync::{Arc, RwLock};
@@ -61,7 +62,7 @@ impl World {
             let (x, y, z) = coords.relative(x, y, z);
             chunk.read().unwrap().get_block(x, y, z)
         } else {
-            Block::from_name("minecraft:air").unwrap()
+            Block(block_id!(air))
         }
     }
 

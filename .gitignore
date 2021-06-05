@@ -1,6 +1,6 @@
 .idea
 .vscode
 *.iml
-/target
+target
 config.yml
 /players

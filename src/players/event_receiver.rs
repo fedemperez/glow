@@ -1,3 +1,4 @@
+use block_macro::block_id;
 use legion::*;
 use nalgebra::vector;
 use crate::buckets::EntityTracker;
@@ -74,11 +75,11 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 match status {
                     0 => {
                         chunks.set_block(x, y, z, 
-                            Block::from_name("minecraft:air").unwrap());
+                            Block(block_id!(air)));
                     },
                     2 => {
                         chunks.set_block(x, y, z, 
-                            Block::from_name("minecraft:air").unwrap());
+                            Block(block_id!(air)));
                     },
                     _ => (),
                 }

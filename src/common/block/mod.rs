@@ -6,17 +6,11 @@ pub use face::BlockFace;
 use self::id::get_default_state;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
-pub struct Block {
-    state: u16,
-}
+pub struct Block(pub u16);
 
 impl Block {
     pub fn from_name(name: &str) -> Option<Self> {
         get_default_state(name)
-            .map(|state| Self{ state })
-    }
-
-    pub fn get_id(&self) -> u16 {
-        self.state
+            .map(|state| Self(state))
     }
 }

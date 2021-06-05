@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use block_macro::block_id;
 use super::chunk_source::ChunkSource;
 use super::{Chunk, ChunkCoords};
 use crate::common::block::Block;
@@ -12,7 +13,7 @@ impl ChunkSource for FlatGenerator {
         for x in 0..16 {
             for z in 0..16 {
                 chunk.set_block(x, 0, z, 
-                    Block::from_name("minecraft:grass_block").unwrap());
+                    Block(block_id!(grass_block)));
             }
         }
         Some(chunk)

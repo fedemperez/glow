@@ -3,6 +3,7 @@ use super::events::ChunkEvent;
 use super::section::{Section, SECTION_LENGTH};
 use std::iter::repeat_with;
 use std::sync::{Arc, Mutex};
+use block_macro::block_id;
 use nbt::{Value, Map};
 use crate::util::{compacted_long, push_varint};
 
@@ -30,7 +31,7 @@ impl Chunk {
             Some(section) => {
                 section.get_block(x, y % SECTION_LENGTH, z)
             }
-            None => Block::from_name("minecraft:air").unwrap(),
+            None => Block(block_id!(air)),
         }
     }
 

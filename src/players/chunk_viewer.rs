@@ -38,7 +38,7 @@ fn handle_chunk_event(sender: &UnboundedSender<ClientboundPacket>,
         ChunkEvent::BlockChanged { x, y, z, new } => {
             let (x, y, z) = coords.global(x, y, z);
             sender.send(ClientboundPacket::BlockChange {
-                x, y, z, block_state: new.get_id() as u32,
+                x, y, z, block_state: new.0 as u32,
             });
         },
     }
