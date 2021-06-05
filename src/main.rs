@@ -7,6 +7,7 @@ mod entities;
 mod buckets;
 mod inventory;
 mod common;
+mod serialization;
 
 use std::time::{Duration, Instant};
 

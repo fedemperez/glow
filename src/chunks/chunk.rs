@@ -5,7 +5,7 @@ use std::iter::repeat_with;
 use std::sync::{Arc, Mutex};
 use block_macro::block_id;
 use nbt::{Value, Map};
-use crate::util::{compacted_long, push_varint};
+use crate::serialization::compacted_long;
 
 pub const CHUNK_HEIGHT: usize = 256;
 pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
@@ -75,7 +75,7 @@ impl Chunk {
                 heights.push(self.get_height(x, z));
             }
         }
-        let heights = compacted_long(heights, 9);
+        let heights = compacted_long(&heights, 9);
         let mut map = Map::new();
         map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights));
         Value::Compound(map)
@@ -101,13 +101,7 @@ impl Chunk {
         let mut bytes = vec![];
         for section in &self.sections {
             if let Some(section) = section {
-                bytes.extend_from_slice(&16u16.to_be_bytes());
-                let (bits_per_block, data) = section.get_compacted_data();
-                bytes.push(bits_per_block as u8);
-                push_varint(data.len() as u32, &mut bytes);
-                for long in data {
-                    bytes.extend_from_slice(&long.to_be_bytes());
-                }
+                section.push_data(&mut bytes);
             }
         }
         bytes

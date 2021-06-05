@@ -5,7 +5,7 @@ pub use face::BlockFace;
 
 use self::id::get_default_state;
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 pub struct Block(pub u16);
 
 impl Block {

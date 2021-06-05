@@ -1,7 +1,7 @@
 use anyhow::Result;
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 use nbt::{Value, to_writer};
-use crate::util::push_varint;
+use crate::serialization::push_varint;
 
 pub struct PacketBuilder {
     bytes: Vec<u8>,

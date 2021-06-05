@@ -4,6 +4,7 @@ mod chunk_source;
 mod world;
 mod coords;
 mod flat_generator;
+mod palette;
 pub mod events;
 
 pub use chunk::Chunk;
