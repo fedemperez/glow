@@ -1,4 +1,4 @@
-pub fn compacted_long(values: &Vec<u16>, bits_per_value: u32) -> Vec<i64> {
+pub fn write_compacted_long(values: &[u16], bits_per_value: u32) -> Vec<i64> {
     let mut result = Vec::with_capacity(values.len() / (64 / bits_per_value as usize));
     let mut current_long = 0;
     let mut inserted_bits = 0;
@@ -20,6 +20,20 @@ pub fn compacted_long(values: &Vec<u16>, bits_per_value: u32) -> Vec<i64> {
     result
 }
 
+pub fn read_compacted_long(data: &[i64], bits_per_value: u32) -> Vec<u16> {
+    let values_per_long = 64 / bits_per_value;
+    let mask = 2i64.pow(bits_per_value) - 1;
+    let mut result = Vec::with_capacity(values_per_long as usize * data.len());
+    for long in data {
+        let mut long = *long;
+        for _ in 0..values_per_long {
+            result.push((long & mask) as u16);
+            long >>= bits_per_value;
+        }
+    }
+    result
+}
+
 pub fn push_varint(mut value: u32, buffer: &mut Vec<u8>) {
     loop {
         let mut byte = value as u8 & 0b01111111;
@@ -36,12 +50,23 @@ pub fn push_varint(mut value: u32, buffer: &mut Vec<u8>) {
 
 #[cfg(test)]
 mod tests {
-    use super::compacted_long;
+    use super::{
+        read_compacted_long,
+        write_compacted_long};
+    
     #[test]
-    fn compacted_long_test() {
+    fn write_test() {
         let input = vec![1, 2, 2, 3, 4, 4, 5, 6, 6, 4, 8, 0, 7, 4, 3, 13, 15, 16, 9, 14, 10, 12, 0, 2];
-        let result = compacted_long(&input, 5);
+        let result = write_compacted_long(&input, 5);
         let expected = vec![0x0020863148418841, 0x01018A7260F68C87];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn read_test() {
+        let input = vec![0x0020863148418841, 0x01018A7260F68C87];
+        let result = read_compacted_long(&input, 5);
+        let expected = vec![1, 2, 2, 3, 4, 4, 5, 6, 6, 4, 8, 0, 7, 4, 3, 13, 15, 16, 9, 14, 10, 12, 0, 2];
         assert_eq!(result, expected);
     }
 }

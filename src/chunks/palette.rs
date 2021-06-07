@@ -20,6 +20,16 @@ impl Palette {
         }
     }
 
+    pub fn from_entries(input: &[Block]) -> Self {
+        Self {
+            entries: input.iter().map(|b| b.0)
+                .collect(),
+            block_to_entry: input.iter().enumerate()
+                .map(|(index, block)| (*block, index as u16))
+                .collect(),
+        }
+    }
+
     pub fn get_bits_per_block(&self) -> u8 {
         ((self.entries.len() as f32).log2().ceil() as u8)
             .max(MIN_BITS)

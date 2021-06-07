@@ -5,7 +5,7 @@ use std::iter::repeat_with;
 use std::sync::{Arc, Mutex};
 use block_macro::block_id;
 use nbt::{Value, Map};
-use crate::serialization::compacted_long;
+use crate::serialization::write_compacted_long;
 
 pub const CHUNK_HEIGHT: usize = 256;
 pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
@@ -21,6 +21,15 @@ impl Chunk {
             sections: repeat_with(|| None)
                 .take(CHUNK_HEIGHT / SECTION_LENGTH)
                 .collect(),
+            subscribers: vec![],
+        }
+    }
+
+    pub fn from_sections(sections: Vec<Option<Section>>)
+        -> Self
+    {
+        Self {
+            sections,
             subscribers: vec![],
         }
     }
@@ -75,7 +84,7 @@ impl Chunk {
                 heights.push(self.get_height(x, z));
             }
         }
-        let heights = compacted_long(&heights, 9);
+        let heights = write_compacted_long(&heights, 9);
         let mut map = Map::new();
         map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights));
         Value::Compound(map)

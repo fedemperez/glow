@@ -3,4 +3,4 @@
 *.iml
 target
 config.yml
-/players
+/world

@@ -5,6 +5,7 @@ mod world;
 mod coords;
 mod flat_generator;
 mod palette;
+mod loading;
 pub mod events;
 
 pub use chunk::Chunk;
@@ -13,8 +14,11 @@ pub use world::World;
 use legion::{Resources, systems::Builder};
 use flat_generator::FlatGenerator;
 
+use crate::chunks::loading::AnvilChunkLoader;
+
 pub fn register(schedule: &mut Builder, resources: &mut Resources) {
     resources.insert(World::new(vec![
+        Box::new(AnvilChunkLoader::new()),
         Box::new(FlatGenerator),
     ]));
 }

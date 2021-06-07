@@ -1,7 +1,10 @@
 use block_macro::block_id;
 
 use crate::common::block::Block;
-use crate::serialization::{compacted_long, push_varint};
+use crate::serialization::{
+    read_compacted_long, 
+    write_compacted_long, 
+    push_varint};
 
 use super::palette::Palette;
 
@@ -19,6 +22,18 @@ impl Section {
         Self {
             blocks: vec![block_id!(air); BLOCKS_PER_SECTION],
             palette: Some(Palette::new()),
+        }
+    }
+
+    pub fn from_raw(compacted_longs: &[i64], palette: Palette)
+        -> Self
+    {
+        let blocks = read_compacted_long(
+            compacted_longs, 
+            palette.get_bits_per_block() as u32);
+        Self {
+            blocks,
+            palette: Some(palette),
         }
     }
 
@@ -82,10 +97,10 @@ impl Section {
 
     fn get_compacted_blocks(&self) -> Vec<i64> {
         if let Some(palette) = &self.palette {
-            compacted_long(&self.blocks, 
+            write_compacted_long(&self.blocks, 
                 palette.get_bits_per_block() as u32)
         } else {
-            compacted_long(&self.blocks, 
+            write_compacted_long(&self.blocks, 
                 GLOBAL_PALETTE_BITS_PER_BLOCK as u32)
         }
     }

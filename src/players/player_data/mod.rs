@@ -31,7 +31,7 @@ impl PlayerData {
 }
 
 fn get_path(uuid: Uuid) -> String {
-    format!("./players/{}.dat", uuid)
+    format!("./world/playerdata/{}.dat", uuid)
 }
 
 fn serialize_rotation<S>(rotation: &(f32, f32), serializer: S) 
@@ -41,18 +41,4 @@ fn serialize_rotation<S>(rotation: &(f32, f32), serializer: S)
     seq.serialize_element(&rotation.0)?;
     seq.serialize_element(&rotation.1)?;
     seq.end()
-}
-
-#[cfg(test)]
-mod tests {
-    use uuid::Uuid;
-    use crate::players::player_data::PlayerData;
-
-    #[tokio::test]
-    async fn test() {
-        println!("{:?}", PlayerData::
-            load(Uuid::parse_str("0b51f86e-e654-33d5-9328-5c9fd959a2a9").unwrap())
-            .await.unwrap()
-        );
-    }
 }
