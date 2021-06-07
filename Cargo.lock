@@ -130,6 +130,7 @@ dependencies = [
  "lazy_static",
  "legion",
  "nalgebra",
+ "named-binary-tag",
  "num-derive",
  "num-integer",
  "num-traits",

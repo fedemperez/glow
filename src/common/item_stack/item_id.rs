@@ -37,6 +37,6 @@ fn network_to_file_id(id: u32) -> Result<&'static str> {
 }
 
 fn file_to_network_id(id: &str) -> Result<u32> {
-    ITEM_ID_MAP.get_by_left(id).map(|v| *v)
+    ITEM_ID_MAP.get_by_left(id).cloned()
         .ok_or(anyhow!("Invalid file item id"))
 }

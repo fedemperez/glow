@@ -10,7 +10,7 @@ lazy_static! {
 }
 
 pub fn get_default_state(name: &str) -> Option<u16> {
-    BLOCK_ID_MAP.get(name).map(|v| *v)
+    BLOCK_ID_MAP.get(name).cloned()
 }
 
 fn gen_block_id_map() -> HashMap<String, u16> {

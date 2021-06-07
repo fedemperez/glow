@@ -1,10 +1,12 @@
 use std::iter::repeat_with;
 
+use anvil_nbt::CompoundTag;
 use anvil_region::position::RegionChunkPosition;
 use anvil_region::position::RegionPosition;
 use anvil_region::provider::RegionProvider;
 use async_trait::async_trait;
 use anvil_region::provider::FolderRegionProvider;
+use tokio::task;
 use crate::common::block::Block;
 
 use super::Chunk;
@@ -15,32 +17,18 @@ use super::palette::Palette;
 use super::section::SECTION_LENGTH;
 use super::section::Section;
 
-static mut UWU: bool = false;
-
-pub struct AnvilChunkLoader {
-    provider: FolderRegionProvider<'static>,
-}
+pub struct AnvilChunkLoader;
 
 impl AnvilChunkLoader {
     pub fn new() -> Self {
-        Self {
-            provider: FolderRegionProvider::new("world/region"),
-        }
+        Self
     }
 }
 
 #[async_trait]
 impl ChunkSource for AnvilChunkLoader {
     async fn load_chunk(&self, coords: ChunkCoords) -> Option<Chunk> {
-        let ChunkCoords(chunk_x, chunk_y) = coords;
-        let region_position = 
-            RegionPosition::from_chunk_position(chunk_x, chunk_y);
-        let chunk_position = 
-            RegionChunkPosition::from_chunk_position(chunk_x, chunk_y);
-
-        let mut region = self.provider.get_region(region_position).unwrap();
-
-        let chunk = region.read_chunk(chunk_position).ok()?;
+        let chunk = read_chunk(coords).await?;
         let section_tags = chunk
             .get_compound_tag("Level").unwrap()
             .get_compound_tag_vec("Sections").unwrap();
@@ -53,7 +41,7 @@ impl ChunkSource for AnvilChunkLoader {
                 tag.get_compound_tag_vec("Palette") 
             {
                 let palette_entries: Vec<Block> = palette.into_iter()
-                    .map(|block| block.get_str("Name").unwrap())
+                    .map(|tag| tag.get_str("Name").unwrap())
                     .map(|name| Block::from_name(name).unwrap())
                     .collect();
                 let palette = Palette::from_entries(palette_entries.as_slice());
@@ -65,4 +53,17 @@ impl ChunkSource for AnvilChunkLoader {
         }
         Some(Chunk::from_sections(sections))
     }
+}
+
+async fn read_chunk(coords: ChunkCoords) -> Option<CompoundTag> {
+    let ChunkCoords(chunk_x, chunk_y) = coords;
+    let region_position = 
+        RegionPosition::from_chunk_position(chunk_x, chunk_y);
+    let chunk_position = 
+        RegionChunkPosition::from_chunk_position(chunk_x, chunk_y);
+    task::spawn_blocking(move || {
+        let provider = FolderRegionProvider::new("world/region");
+        let mut region = provider.get_region(region_position).ok()?;
+        region.read_chunk(chunk_position).ok()
+    }).await.ok()?
 }

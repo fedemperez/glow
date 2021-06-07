@@ -38,6 +38,9 @@ async fn main() -> Result<()> {
         schedule.execute(&mut world, &mut resources);
         if start.elapsed() < TICK_INTERVAL {
             sleep(TICK_INTERVAL - start.elapsed()).await;
+        } else {
+            println!("Server is lagging :(, last update took {}ms", 
+                start.elapsed().as_millis());
         }
     }
 }
