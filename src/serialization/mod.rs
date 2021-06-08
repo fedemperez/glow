@@ -1,3 +1,46 @@
+use num_integer::Integer;
+
+pub struct CompactedLong {
+    pub longs: Vec<i64>,
+    bits: u8,
+}
+
+impl CompactedLong {
+    pub fn new(longs: Vec<i64>, bits: u8) -> Self {
+        Self { longs, bits }
+    }
+
+    pub fn get(&self, index: usize) -> i64 {
+        let (index, displace) = self.location(index);
+        (self.longs[index] >> displace) & self.mask()
+    }
+
+    pub fn set(&mut self, index: usize, value: i64) {
+        let (index, displace) = self.location(index);
+        let value = value & self.mask();
+        self.longs[index] &= !(self.mask() << displace);
+        self.longs[index] |= value << displace;
+    }
+
+    pub fn set_bits(&mut self, bits: u8) {
+        if bits != self.bits {
+            let data = read_compacted_long(self.longs.as_slice(), self.bits as u32);
+            self.longs = write_compacted_long(data.as_slice(), bits as u32);
+            self.bits = bits;
+        }
+    }
+
+    fn location(&self, index: usize) -> (usize, usize) {
+        let items_per_long = 64 / self.bits as usize;
+        let (index, displace) = index.div_rem(&items_per_long);
+        (index, displace * self.bits as usize)
+    }
+
+    fn mask(&self) -> i64 {
+        (2 << self.bits) - 1
+    }
+}
+
 pub fn write_compacted_long(values: &[u16], bits_per_value: u32) -> Vec<i64> {
     let mut result = Vec::with_capacity(values.len() / (64 / bits_per_value as usize));
     let mut current_long = 0;

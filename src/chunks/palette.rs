@@ -5,7 +5,6 @@ use block_macro::block_id;
 use crate::common::block::Block;
 
 const MIN_BITS: u8 = 4;
-const MAX_BITS: u32 = 8;
 
 pub struct Palette {
     pub entries: Vec<u16>,
@@ -39,18 +38,14 @@ impl Palette {
         Block(self.entries[id as usize])
     }
 
-    pub fn get_or_add_id(&mut self, block: Block) -> Result<u16> {
+    pub fn get_or_add_id(&mut self, block: Block) -> u16 {
         if let Some(id) = self.block_to_entry.get(&block) {
-            Ok(*id)
+            *id
         } else {
             let id = self.entries.len() as u16;
-            if id < 2u16.pow(MAX_BITS) {
-                self.entries.push(block.0);
-                self.block_to_entry.insert(block, id);
-                Ok(id)
-            } else {
-                Err(anyhow!("Palette is too big"))
-            }
+            self.entries.push(block.0);
+            self.block_to_entry.insert(block, id);
+            id
         }
     }
 }

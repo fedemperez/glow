@@ -46,7 +46,7 @@ impl ChunkSource for AnvilChunkLoader {
                     .collect();
                 let palette = Palette::from_entries(palette_entries.as_slice());
                 let blocks = tag.get_i64_vec("BlockStates").unwrap();
-                let section = Section::from_raw(&blocks, palette);
+                let section = Section::from_raw(blocks.clone(), palette);
                 let y = tag.get_i8("Y").unwrap() as usize;
                 sections[y] = Some(section);
             }
