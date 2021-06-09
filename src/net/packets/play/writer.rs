@@ -218,6 +218,12 @@ impl ClientboundPacket {
                 }
                 pack.write(writer).await
             }
+            Self::UnloadChunk(x, z) => {
+                PacketBuilder::new(0x1C)
+                    .add_bytes(&x.to_be_bytes())
+                    .add_bytes(&z.to_be_bytes())
+                    .write(writer).await
+            }
         }
     }
 }

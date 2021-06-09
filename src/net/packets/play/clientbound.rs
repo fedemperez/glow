@@ -103,5 +103,6 @@ pub enum ClientboundPacket {
     WindowItems {
         window: u8,
         items: Vec<Option<ItemStack>>,
-    }
+    },
+    UnloadChunk(i32, i32),
 }

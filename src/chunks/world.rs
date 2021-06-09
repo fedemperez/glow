@@ -23,33 +23,41 @@ impl World {
         }
     }
 
-    pub fn subscribe<F>(&self, coords: ChunkCoords, callback: F)
+    pub fn subscribe<F>(&self, coords: ChunkCoords, id: u32, callback: F)
         -> impl Future<Output=()> where F: Fn(ChunkEvent) + 'static + Send + Sync
     {
-        let chunks = self.chunks.clone();
+        let world = self.chunks.clone();
         let sources = self.chunk_sources.clone();
         async move {
-            let chunk = chunks.read().unwrap()
-                .get(&coords).map(|c| c.clone());
+            let chunk = world.read().unwrap()
+                .get(&coords).cloned();
             match chunk {
                 Some(chunk) => {
                     callback(ChunkEvent::ChunkLoaded{ chunk: chunk.clone() });
-                    chunk.write().unwrap().subscribe(callback);
+                    chunk.write().unwrap().subscribe(id, callback);
                 },
                 None => {
                     for source in &*sources {
                         if let Some(chunk) = source.load_chunk(coords).await {
                             let chunk = Arc::new(RwLock::new(chunk));
-                            chunks.write().unwrap()
+                            world.write().unwrap()
                                 .insert(coords, chunk.clone());
                             callback(ChunkEvent::ChunkLoaded{ chunk: chunk.clone() });
-                            chunk.write().unwrap().subscribe(callback);
+                            chunk.write().unwrap().subscribe(id, callback);
                             return;
                         }
                     }
                     eprintln!("No chunk source could load chunk at {:?}", coords);
                 }
             }
+        }
+    }
+
+    pub fn unsubscribe(&self, coords: ChunkCoords, id: u32) {
+        let chunk = self.chunks.read().unwrap()
+            .get(&coords).cloned();
+        if let Some(chunk) = chunk {
+            chunk.write().unwrap().unsubscribe(id);
         }
     }
 

@@ -6,26 +6,30 @@ use nalgebra::Vector3;
 use crate::chunks::Chunk;
 use crate::chunks::events::ChunkEvent;
 use crate::net::PlayerConnection;
-use crate::entities::Position;
+use crate::entities::{EntityId, Position};
 use crate::chunks::{ChunkCoords, World as Chunks};
 use crate::net::packets::play::ClientboundPacket;
 
 #[system(for_each)]
-pub fn update_chunk_view(pos: &Position, view: &mut ChunkViewer, 
+pub fn update_chunk_view(id: &EntityId, pos: &Position, view: &mut ChunkViewer, 
                conn: &mut PlayerConnection, #[resource] chunks: &Chunks) 
 {
-    if view.changed_chunk(pos.0) {
+    let changes = view.move_to(pos.0);
+    if changes.changed_chunk {
         let ChunkCoords(chunk_x, chunk_y) = ChunkCoords::from_pos(pos.0);
         conn.send(ClientboundPacket::UpdateViewPosition(chunk_x, chunk_y));
-        let needed = view.get_needed(pos.0);
-        for coords in needed {
-            let sender = conn.get_sender();
-            tokio::spawn(chunks.subscribe(coords, 
-                move |event| {
-                    handle_chunk_event(&sender, coords, event);
-                }
-            ));
-        }
+    }
+    for coords in changes.added {
+        let sender = conn.get_sender();
+        tokio::spawn(chunks.subscribe(coords, id.0,
+            move |event| {
+                handle_chunk_event(&sender, coords, event);
+            }
+        ));
+    }
+    for coords in changes.removed {
+        chunks.unsubscribe(coords, id.0);
+        conn.send(ClientboundPacket::UnloadChunk(coords.0, coords.1));
     }
 }
 
@@ -61,7 +65,7 @@ fn send_chunk(sender: &UnboundedSender<ClientboundPacket>,
 }
 
 pub struct ChunkViewer {
-    already_sent: HashSet<ChunkCoords>,
+    in_view: HashSet<ChunkCoords>,
     last_pos: Option<Vector3<f64>>,
     range: i32,
 }
@@ -71,28 +75,31 @@ impl ChunkViewer {
         Self {
             last_pos: None,
             range,
-            already_sent: HashSet::new(),
+            in_view: HashSet::new(),
         }
     }
 
-    pub fn changed_chunk(&self, new_pos: Vector3<f64>) -> bool {
-        match self.last_pos {
+    pub fn move_to(&mut self, new_pos: Vector3<f64>) -> ViewMoveResult {
+        let changed_chunk = match self.last_pos {
             Some(last_pos) => {
                 ChunkCoords::from_pos(last_pos) != ChunkCoords::from_pos(new_pos)
             }
             None => true,
+        };
+        let new_view: HashSet<ChunkCoords> = ChunkCoords::from_pos(new_pos)
+            .get_close(self.range).into_iter().collect();
+        let added = new_view.difference(&self.in_view).cloned().collect();
+        let removed = self.in_view.difference(&new_view).cloned().collect();
+        self.last_pos = Some(new_pos);
+        self.in_view = new_view;
+        ViewMoveResult {
+            added, removed, changed_chunk
         }
     }
+}
 
-    pub fn get_needed(&mut self, pos: Vector3<f64>) -> Vec<ChunkCoords> {
-        let mut needed = vec![];
-        let around = ChunkCoords::from_pos(pos).get_close(self.range);
-        for coords in around {
-            if self.already_sent.insert(coords) {
-                needed.push(coords);
-            }
-        }
-        self.last_pos = Some(pos);
-        needed
-    }
+struct ViewMoveResult {
+    added: Vec<ChunkCoords>,
+    removed: Vec<ChunkCoords>,
+    changed_chunk: bool,
 }

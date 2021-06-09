@@ -3,6 +3,7 @@ use super::events::ChunkEvent;
 use super::section::{Section, SECTION_LENGTH};
 use std::iter::repeat_with;
 use std::sync::{Arc, Mutex};
+use std::collections::HashMap;
 use block_macro::block_id;
 use nbt::{Value, Map};
 use crate::serialization::write_compacted_long;
@@ -12,7 +13,7 @@ pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
 
 pub struct Chunk {
     sections: Vec<Option<Section>>,
-    subscribers: Vec<Box<dyn Fn(ChunkEvent) + Send + Sync>>,
+    subscribers: HashMap<u32, Box<dyn Fn(ChunkEvent) + Send + Sync>>,
 }
 
 impl Chunk {
@@ -21,7 +22,7 @@ impl Chunk {
             sections: repeat_with(|| None)
                 .take(CHUNK_HEIGHT / SECTION_LENGTH)
                 .collect(),
-            subscribers: vec![],
+            subscribers: HashMap::new(),
         }
     }
 
@@ -30,7 +31,7 @@ impl Chunk {
     {
         Self {
             sections,
-            subscribers: vec![],
+            subscribers: HashMap::new(),
         }
     }
 
@@ -61,14 +62,18 @@ impl Chunk {
         });
     }
 
-    pub fn subscribe<F>(&mut self, callback: F)
+    pub fn subscribe<F>(&mut self, id: u32, callback: F)
         where F: Fn(ChunkEvent) + 'static + Send + Sync
     {
-        self.subscribers.push(Box::new(callback));
+        self.subscribers.insert(id, Box::new(callback));
+    }
+
+    pub fn unsubscribe(&mut self, id: u32) {
+        self.subscribers.remove(&id);
     }
 
     fn emit_event(&self, event: ChunkEvent) {
-        for callback in &self.subscribers {
+        for callback in self.subscribers.values() {
             callback(event.clone());
         }
     }
