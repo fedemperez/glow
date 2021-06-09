@@ -2,7 +2,7 @@ use legion::*;
 use tokio::sync::mpsc::UnboundedSender;
 use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
-use nalgebra::Vector3;
+use nalgebra::{Vector3, vector};
 use crate::chunks::Chunk;
 use crate::chunks::events::ChunkEvent;
 use crate::net::PlayerConnection;
@@ -86,10 +86,13 @@ impl ChunkViewer {
             }
             None => true,
         };
-        let new_view: HashSet<ChunkCoords> = ChunkCoords::from_pos(new_pos)
-            .get_close(self.range).into_iter().collect();
-        let added = new_view.difference(&self.in_view).cloned().collect();
-        let removed = self.in_view.difference(&new_view).cloned().collect();
+        let new_view: HashSet<ChunkCoords> = 
+            ChunkCoords::near(new_pos, self.range)
+            .into_iter().collect();
+        let added = new_view.difference(&self.in_view)
+            .cloned().collect();
+        let removed = self.in_view.difference(&new_view)
+            .cloned().collect();
         self.last_pos = Some(new_pos);
         self.in_view = new_view;
         ViewMoveResult {
