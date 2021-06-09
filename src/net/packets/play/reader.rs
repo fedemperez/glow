@@ -67,7 +67,7 @@ impl ServerboundPacket {
                 })
             }
             0x28 => {
-                let slot = payload.read_u16().await?;
+                let slot = payload.read_i16().await?;
                 let stack = if payload.read_u8().await? == 0 {
                     None
                 } else {

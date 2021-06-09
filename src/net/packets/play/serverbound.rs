@@ -33,7 +33,7 @@ pub enum ServerboundPacket {
         slot: u16,
     },
     CreativeInventoryAction {
-        slot: u16,
+        slot: i16,
         stack: Option<ItemStack>,
     },
     PlayerBlockPlacement {

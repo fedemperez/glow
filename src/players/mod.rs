@@ -2,7 +2,7 @@ mod player_list;
 mod chunk_viewer;
 mod new_players;
 mod entity_viewer;
-mod event_receiver;
+mod packet_handler;
 mod player_data;
 mod disconnections;
 
@@ -15,7 +15,7 @@ use player_list::{PlayerList, update_player_list_system};
 use chunk_viewer::update_chunk_view_system;
 use new_players::{JoiningPlayerQueue, join_players_system, load_player_data_system};
 use entity_viewer::send_entity_events_system;
-use event_receiver::receive_events_system;
+use packet_handler::receive_events_system;
 use disconnections::{DisconnectionQueue, handle_disconnections_system};
 
 #[system(for_each)]

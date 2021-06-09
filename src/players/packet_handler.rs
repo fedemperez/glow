@@ -91,8 +91,10 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             ServerboundPacket::CreativeInventoryAction {
                 slot, stack
             } => {
-                let index = SlotIndex::from_network(slot as u8);
-                inventory.set_slot(index, stack);
+                if slot != -1 {
+                    let index = SlotIndex::from_network(slot as u8);
+                    inventory.set_slot(index, stack);
+                }
             },
             ServerboundPacket::PlayerBlockPlacement {
                 hand, location, face, ..
