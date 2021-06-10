@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use anyhow::{anyhow, Result};
 use block_macro::block_id;
 
 use crate::common::block::Block;
@@ -7,22 +6,21 @@ use crate::common::block::Block;
 const MIN_BITS: u8 = 4;
 
 pub struct Palette {
-    pub entries: Vec<u16>,
+    pub entries: Vec<Block>,
     block_to_entry: HashMap<Block, u16>,
 }
 
 impl Palette {
     pub fn new() -> Self {
         Self {
-            entries: vec![block_id!(air)],
+            entries: vec![Block(block_id!(air))],
             block_to_entry: HashMap::new(),
         }
     }
 
     pub fn from_entries(input: &[Block]) -> Self {
         Self {
-            entries: input.iter().map(|b| b.0)
-                .collect(),
+            entries: input.iter().cloned().collect(),
             block_to_entry: input.iter().enumerate()
                 .map(|(index, block)| (*block, index as u16))
                 .collect(),
@@ -35,7 +33,7 @@ impl Palette {
     }
 
     pub fn get_block(&self, id: u16) -> Block {
-        Block(self.entries[id as usize])
+        self.entries[id as usize]
     }
 
     pub fn get_or_add_id(&mut self, block: Block) -> u16 {
@@ -43,7 +41,7 @@ impl Palette {
             *id
         } else {
             let id = self.entries.len() as u16;
-            self.entries.push(block.0);
+            self.entries.push(block);
             self.block_to_entry.insert(block, id);
             id
         }

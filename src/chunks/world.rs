@@ -15,7 +15,7 @@ const CHUNK_UNLOAD_TIME: Duration = Duration::from_secs(10);
 const MAX_UNLOADS_PER_TICK: usize = 2;
 
 pub fn register(schedule: &mut Builder) {
-    schedule.add_system(unload_chunks_system());
+    schedule.add_thread_local(unload_chunks_system());
 }
 
 #[system]
@@ -31,6 +31,9 @@ fn unload_chunks(#[resource] world: &mut World) {
     }
     let mut chunks = world.chunks.write().unwrap();
     for (coords, chunk) in removed {
+        tokio::task::spawn_blocking(move || {
+            chunk.save(coords);
+        });
         chunks.remove(&coords);
     }
 }

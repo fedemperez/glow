@@ -1,3 +1,4 @@
+use anvil_nbt::CompoundTag;
 use block_macro::block_id;
 
 use crate::common::block::Block;
@@ -80,7 +81,7 @@ impl Section {
             push_varint(palette.entries.len() as u32,
                 data);
             for entry in &palette.entries {
-                push_varint(*entry as u32, data);
+                push_varint(entry.0 as u32, data);
             }
         } else {
             data.push(GLOBAL_PALETTE_BITS);
@@ -90,5 +91,21 @@ impl Section {
         for long in blocks {
             data.extend_from_slice(&long.to_be_bytes());
         }
+    }
+
+    pub fn get_nbt(&self, y: i8) -> CompoundTag {
+        let mut tag = CompoundTag::new();
+        if let Some(palette) = &self.palette {
+            let mut pale_nbt = vec![];
+            for block in &palette.entries {
+                let mut block_nbt = CompoundTag::new();
+                block_nbt.insert_str("Name", block.get_name().as_str());
+                pale_nbt.push(block_nbt);
+            }
+            tag.insert_compound_tag_vec("Palette", pale_nbt);
+            tag.insert_i64_vec("BlockStates", self.blocks.longs.clone());
+            tag.insert_i8("Y", y);
+        }
+        tag
     }
 }

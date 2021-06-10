@@ -1,11 +1,16 @@
 use std::iter::repeat_with;
 
+use anvil_nbt::CompoundTag;
+use anvil_region::{
+    position::{RegionChunkPosition, RegionPosition}, 
+    provider::{FolderRegionProvider, RegionProvider}};
+
 use block_macro::block_id;
 use nbt::{Map, Value};
 
 use crate::{common::block::Block, serialization::write_compacted_long};
 
-use super::section::{Section, SECTION_LENGTH};
+use super::{ChunkCoords, section::{Section, SECTION_LENGTH}};
 
 pub const CHUNK_HEIGHT: usize = 256;
 pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
@@ -92,5 +97,31 @@ impl ChunkData {
             }
         }
         bytes
+    }
+
+    pub fn save(&self, coords: ChunkCoords) {
+        let provider = FolderRegionProvider::new("world/region");
+        let ChunkCoords(chunk_x, chunk_z) = coords;
+        let region_position = 
+            RegionPosition::from_chunk_position(chunk_x, chunk_z);
+        let region_chunk_position = 
+            RegionChunkPosition::from_chunk_position(chunk_x, chunk_z);
+
+        let mut region = provider.get_region(region_position).unwrap();
+
+        let mut chunk_tag = CompoundTag::new();
+        let mut level_tag = CompoundTag::new();
+        level_tag.insert_i32("xPos", chunk_x);
+        level_tag.insert_i32("zPos", chunk_z);
+        let mut section_tags = vec![];
+        for (y, section) in self.sections.iter().enumerate() {
+            if let Some(section) = section {
+                section_tags.push(section.get_nbt(y as i8));
+            }
+        }
+        level_tag.insert_compound_tag_vec("Sections", section_tags);
+        chunk_tag.insert_compound_tag("Level", level_tag);
+
+        region.write_chunk(region_chunk_position, chunk_tag);
     }
 }

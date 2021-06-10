@@ -1,6 +1,7 @@
 use block_macro::block_id;
 
 use crate::common::block::Block;
+use super::ChunkCoords;
 use super::ChunkData;
 use super::events::ChunkEvent;
 use std::collections::HashMap;
@@ -75,6 +76,12 @@ impl Chunk {
         match *unobserved_since {
             Some(time) => Instant::now() - time,
             None => Duration::from_secs(0),
+        }
+    }
+
+    pub fn save(&self, coords: ChunkCoords) {
+        if let Some(data) = &self.data {
+            data.read().unwrap().save(coords);
         }
     }
 
