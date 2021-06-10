@@ -9,6 +9,8 @@ mod loading;
 pub mod events;
 mod chunk_data;
 
+use std::io::Write;
+
 pub use chunk_data::ChunkData;
 pub use coords::ChunkCoords;
 pub use world::World;
@@ -23,4 +25,11 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
         Box::new(AnvilChunkLoader::new()),
         Box::new(FlatGenerator),
     ]));
+}
+
+pub async fn on_stop(resources: &mut Resources) {
+    print!("Saving chunks...         ");
+    let _ = std::io::stdout().flush();
+    resources.get::<World>().unwrap().save_all();
+    println!("Done");
 }

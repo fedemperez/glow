@@ -1,4 +1,5 @@
 use nbt::Value as Nbt;
+use serde_json::Value as Json;
 use uuid::Uuid;
 
 use crate::common::item_stack::ItemStack;
@@ -105,4 +106,7 @@ pub enum ClientboundPacket {
         items: Vec<Option<ItemStack>>,
     },
     UnloadChunk(i32, i32),
+    Disconnect {
+        reason: Json,
+    },
 }

@@ -6,8 +6,15 @@ mod packet_handler;
 mod player_data;
 mod disconnections;
 
+use std::io::Write;
+
 use legion::*;
+use serde_json::json;
 use systems::Builder;
+use uuid::Uuid;
+use crate::entities::Position;
+use crate::entities::Rotation;
+use crate::inventory::Inventory;
 use crate::net::PlayerConnection;
 use crate::net::packets::play::ClientboundPacket;
 use crate::util::get_time_millis;
@@ -17,6 +24,8 @@ use new_players::{JoiningPlayerQueue, join_players_system, load_player_data_syst
 use entity_viewer::send_entity_events_system;
 use packet_handler::receive_events_system;
 use disconnections::{DisconnectionQueue, handle_disconnections_system};
+
+use self::player_data::PlayerData;
 
 #[system(for_each)]
 fn keepalive(conn: &PlayerConnection) {
@@ -36,4 +45,26 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
     resources.insert(PlayerList::new());
     resources.insert(JoiningPlayerQueue::new());
     resources.insert(DisconnectionQueue::new());
+}
+
+pub async fn on_stop(world: &mut World, resources: &mut Resources) {
+    print!("Saving players...        ");
+    let _ = std::io::stdout().flush();
+    let mut query = <(&Uuid, &Position, &Rotation, &Inventory, &PlayerConnection)>::query();
+    for (uuid, pos, rot, inv, conn) in query.iter(world) {
+        conn.send(ClientboundPacket::Disconnect {
+            reason: json!({
+                "text": "Server is closing :(",
+            }),
+        });
+        PlayerData {
+            pos: pos.0,
+            rotation: (rot.0, rot.1),
+            inventory: inv.clone(),
+        }.save(*uuid).await
+        .unwrap_or_else(|err| {
+            eprintln!("Error saving player {}: {}", uuid, err);
+        });
+    }
+    println!("Done");
 }

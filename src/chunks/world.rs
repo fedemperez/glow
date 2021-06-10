@@ -111,6 +111,13 @@ impl World {
             chunk.set_block(x, y, z, block);
         }
     }
+
+    pub fn save_all(&self) {
+        let mut chunks = self.chunks.write().unwrap();
+        for (coords, chunk) in chunks.iter() {
+            chunk.save(*coords);
+        }
+    }
 }
 
 async fn load_chunk(coords: ChunkCoords, sources: &Vec<Box<dyn ChunkSource>>) 

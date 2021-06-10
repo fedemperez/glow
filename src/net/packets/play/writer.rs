@@ -224,6 +224,11 @@ impl ClientboundPacket {
                     .add_bytes(&z.to_be_bytes())
                     .write(writer).await
             }
+            Self::Disconnect{ reason } => {
+                PacketBuilder::new(0x19)
+                    .add_str(&reason.to_string())
+                    .write(writer).await
+            }
         }
     }
 }
