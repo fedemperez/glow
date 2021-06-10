@@ -3,7 +3,7 @@ use tokio::sync::mpsc::UnboundedSender;
 use std::collections::HashSet;
 use std::sync::{Arc, RwLock};
 use nalgebra::{Vector3, vector};
-use crate::chunks::Chunk;
+use crate::chunks::ChunkData;
 use crate::chunks::events::ChunkEvent;
 use crate::net::PlayerConnection;
 use crate::entities::{EntityId, Position};
@@ -21,11 +21,11 @@ pub fn update_chunk_view(id: &EntityId, pos: &Position, view: &mut ChunkViewer,
     }
     for coords in changes.added {
         let sender = conn.get_sender();
-        tokio::spawn(chunks.subscribe(coords, id.0,
+        chunks.subscribe(coords, id.0,
             move |event| {
                 handle_chunk_event(&sender, coords, event);
             }
-        ));
+        );
     }
     for coords in changes.removed {
         chunks.unsubscribe(coords, id.0);
@@ -49,7 +49,7 @@ fn handle_chunk_event(sender: &UnboundedSender<ClientboundPacket>,
 }
 
 fn send_chunk(sender: &UnboundedSender<ClientboundPacket>, 
-    coords: ChunkCoords, chunk: Arc<RwLock<Chunk>>)
+    coords: ChunkCoords, chunk: Arc<RwLock<ChunkData>>)
 {
     let chunk = chunk.read().unwrap();
     sender.send(ClientboundPacket::ChunkData{
@@ -65,7 +65,7 @@ fn send_chunk(sender: &UnboundedSender<ClientboundPacket>,
 }
 
 pub struct ChunkViewer {
-    in_view: HashSet<ChunkCoords>,
+    pub in_view: HashSet<ChunkCoords>,
     last_pos: Option<Vector3<f64>>,
     range: i32,
 }

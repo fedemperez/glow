@@ -9,9 +9,9 @@ use anvil_region::provider::FolderRegionProvider;
 use tokio::task;
 use crate::common::block::Block;
 
-use super::Chunk;
+use super::ChunkData;
 use super::ChunkCoords;
-use super::chunk::CHUNK_HEIGHT;
+use super::chunk_data::CHUNK_HEIGHT;
 use super::chunk_source::ChunkSource;
 use super::palette::Palette;
 use super::section::SECTION_LENGTH;
@@ -27,7 +27,7 @@ impl AnvilChunkLoader {
 
 #[async_trait]
 impl ChunkSource for AnvilChunkLoader {
-    async fn load_chunk(&self, coords: ChunkCoords) -> Option<Chunk> {
+    async fn load_chunk(&self, coords: ChunkCoords) -> Option<ChunkData> {
         let chunk = read_chunk(coords).await?;
         let section_tags = chunk
             .get_compound_tag("Level").unwrap()
@@ -51,7 +51,7 @@ impl ChunkSource for AnvilChunkLoader {
                 sections[y] = Some(section);
             }
         }
-        Some(Chunk::from_sections(sections))
+        Some(ChunkData::from_sections(sections))
     }
 }
 

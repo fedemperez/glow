@@ -1,4 +1,4 @@
-use super::chunk::CHUNK_WIDTH;
+use super::chunk_data::CHUNK_WIDTH;
 use nalgebra::{Vector3, vector};
 use num_integer::Integer;
 use num_traits::Pow;

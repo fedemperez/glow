@@ -1,123 +1,87 @@
-use crate::common::block::Block;
-use super::events::ChunkEvent;
-use super::section::{Section, SECTION_LENGTH};
-use std::iter::repeat_with;
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 use block_macro::block_id;
-use nbt::{Value, Map};
-use crate::serialization::write_compacted_long;
 
-pub const CHUNK_HEIGHT: usize = 256;
-pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
+use crate::common::block::Block;
+use super::ChunkData;
+use super::events::ChunkEvent;
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::sync::RwLock;
+use std::time::Duration;
+use std::time::Instant;
 
+#[derive(Clone)]
 pub struct Chunk {
-    sections: Vec<Option<Section>>,
-    subscribers: HashMap<u32, Box<dyn Fn(ChunkEvent) + Send + Sync>>,
+    data: Option<Arc<RwLock<ChunkData>>>,
+    subscribers: Arc<RwLock<HashMap<u32, Box<dyn Fn(ChunkEvent) + Send + Sync>>>>,
+    unobserved_since: Arc<RwLock<Option<Instant>>>,
 }
 
 impl Chunk {
     pub fn new() -> Self {
         Self {
-            sections: repeat_with(|| None)
-                .take(CHUNK_HEIGHT / SECTION_LENGTH)
-                .collect(),
-            subscribers: HashMap::new(),
+            data: None,
+            subscribers: Default::default(),
+            unobserved_since: Arc::new(RwLock::new(Some(Instant::now()))),
         }
     }
 
-    pub fn from_sections(sections: Vec<Option<Section>>)
-        -> Self
-    {
-        Self {
-            sections,
-            subscribers: HashMap::new(),
-        }
+    pub fn load(&mut self, data: ChunkData) {
+        let data = Arc::new(RwLock::new(data));
+        self.data = Some(data.clone());
+        self.emit_event(ChunkEvent::ChunkLoaded {
+            chunk: data,
+        })
     }
 
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> Block {
-        let section = y / SECTION_LENGTH;
-        match &self.sections[section] {
-            Some(section) => {
-                section.get_block(x, y % SECTION_LENGTH, z)
-            }
+        match &self.data {
+            Some(data) => data.read().unwrap().get_block(x, y, z),
             None => Block(block_id!(air)),
         }
     }
 
-    pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: Block) {
-        let section = y / SECTION_LENGTH;
-        match &mut self.sections[section] {
-            Some(section) => {
-                section.set_block(x, y % SECTION_LENGTH, z, block)
-            }
-            None => {
-                let mut new_sect = Section::new();
-                new_sect.set_block(x, y % SECTION_LENGTH, z, block);
-                self.sections[section] = Some(new_sect);
-            }
+    pub fn set_block(&self, x: usize, y: usize, z: usize, block: Block) {
+        if let Some(data) = &self.data {
+            data.write().unwrap().set_block(x, y, z, block);
+            self.emit_event(ChunkEvent::BlockChanged {
+                x, y, z, new: block,
+            });
         }
-        self.emit_event(ChunkEvent::BlockChanged {
-            x, y, z, new: block,
-        });
     }
 
-    pub fn subscribe<F>(&mut self, id: u32, callback: F)
+    pub fn subscribe<F>(&self, id: u32, callback: F)
         where F: Fn(ChunkEvent) + 'static + Send + Sync
     {
-        self.subscribers.insert(id, Box::new(callback));
+        if let Some(data) = &self.data {
+            callback(ChunkEvent::ChunkLoaded { 
+                chunk: data.clone(),
+            });
+        }
+        self.subscribers.write().unwrap()
+            .insert(id, Box::new(callback));
+        *self.unobserved_since.write().unwrap() = None;
     }
 
-    pub fn unsubscribe(&mut self, id: u32) {
-        self.subscribers.remove(&id);
+    pub fn unsubscribe(&self, id: u32) {
+        let mut subscribers = self.subscribers.write().unwrap();
+        subscribers.remove(&id);
+        if subscribers.len() == 0 {
+            *self.unobserved_since.write().unwrap() = Some(Instant::now());
+        }
+    }
+
+    pub fn time_unobserved(&self) -> Duration {
+        let unobserved_since = self.unobserved_since.read().unwrap();
+        match *unobserved_since {
+            Some(time) => Instant::now() - time,
+            None => Duration::from_secs(0),
+        }
     }
 
     fn emit_event(&self, event: ChunkEvent) {
-        for callback in self.subscribers.values() {
+        let subscribers = self.subscribers.read().unwrap();
+        for callback in subscribers.values() {
             callback(event.clone());
         }
-    }
-
-    fn get_height(&self, x: usize, z: usize) -> u16 {
-        1
-    }
-
-    pub fn get_heightmap(&self) -> Value {
-        let mut heights = Vec::with_capacity(CHUNK_WIDTH * CHUNK_WIDTH);
-        for x in 0..CHUNK_WIDTH {
-            for z in 0..CHUNK_WIDTH {
-                heights.push(self.get_height(x, z));
-            }
-        }
-        let heights = write_compacted_long(&heights, 9);
-        let mut map = Map::new();
-        map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights));
-        Value::Compound(map)
-    }
-
-    pub fn get_biome_map(&self) -> Vec<u16> {
-        vec![0; 1024]
-    }
-
-    pub fn get_sections_bitmask(&self) -> u16 {
-        let mut mask = 0;
-        let mut current_bit = 1;
-        for section in &self.sections {
-            if section.is_some() {
-                mask |= current_bit;
-            }
-            current_bit <<= 1;
-        }
-        mask
-    }
-
-    pub fn get_data(&self) -> Vec<u8> {
-        let mut bytes = vec![];
-        for section in &self.sections {
-            if let Some(section) = section {
-                section.push_data(&mut bytes);
-            }
-        }
-        bytes
     }
 }

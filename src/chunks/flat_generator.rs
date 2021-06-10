@@ -1,15 +1,15 @@
 use async_trait::async_trait;
 use block_macro::block_id;
 use super::chunk_source::ChunkSource;
-use super::{Chunk, ChunkCoords};
+use super::{ChunkData, ChunkCoords};
 use crate::common::block::Block;
 
 pub struct FlatGenerator;
 
 #[async_trait]
 impl ChunkSource for FlatGenerator {
-    async fn load_chunk(&self, coords: ChunkCoords) -> Option<Chunk> {
-        let mut chunk = Chunk::new();
+    async fn load_chunk(&self, coords: ChunkCoords) -> Option<ChunkData> {
+        let mut chunk = ChunkData::new();
         for x in 0..16 {
             for z in 0..16 {
                 chunk.set_block(x, 0, z, 

@@ -9,7 +9,9 @@ use crate::buckets::EntityTracker;
 use crate::entities::{EntityId, Position, Rotation};
 use crate::inventory::Inventory;
 use crate::players::player_data::PlayerData;
+use crate::chunks::{ChunkCoords, World as Chunks};
 
+use super::chunk_viewer::ChunkViewer;
 use super::player_list::PlayerList;
 use crate::entities::Name;
 
@@ -69,6 +71,15 @@ fn remove_player(entity: Entity, world: &mut World, resources: &mut Resources) {
             let mut list = resources.get_mut::<PlayerList>()?;
             let uuid = entry.get_component::<Uuid>().ok()?;
             list.remove(*uuid);
+            Some(())
+        })();
+        (|| {
+            let chunks = resources.get::<Chunks>()?;
+            let id = entry.get_component::<EntityId>().ok()?;
+            let viewed = entry.get_component::<ChunkViewer>().ok()?;
+            for coords in &viewed.in_view {
+                chunks.unsubscribe(*coords, id.0);
+            }
             Some(())
         })();
         (|| {
