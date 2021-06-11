@@ -1,23 +1,17 @@
 mod chunk;
-mod section;
-mod chunk_source;
 mod world;
 mod coords;
-mod flat_generator;
-mod palette;
 mod loading;
+mod data;
 pub mod events;
-mod chunk_data;
 
 use std::io::Write;
 
-pub use chunk_data::ChunkData;
+pub use data::ChunkData;
 pub use coords::ChunkCoords;
 pub use world::World;
 use legion::{systems::Builder, Resources};
-use flat_generator::FlatGenerator;
-
-use crate::chunks::loading::AnvilChunkLoader;
+use loading::{FlatGenerator, AnvilChunkLoader};
 
 pub fn register(schedule: &mut Builder, resources: &mut Resources) {
     world::register(schedule);

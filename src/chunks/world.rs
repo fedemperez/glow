@@ -8,7 +8,7 @@ use legion::system;
 use legion::systems::Builder;
 use std::time::Duration;
 use std::collections::HashMap;
-use super::chunk_source::ChunkSource;
+use super::loading::ChunkLoader;
 use std::sync::{Arc, RwLock};
 
 const CHUNK_UNLOAD_TIME: Duration = Duration::from_secs(10);
@@ -42,14 +42,14 @@ pub struct World {
     chunks: Arc<RwLock<
         HashMap<ChunkCoords, Chunk>
     >>,
-    chunk_sources: Arc<Vec<Box<dyn ChunkSource>>>,
+    chunk_loaders: Arc<Vec<Box<dyn ChunkLoader>>>,
 }
 
 impl World {
-    pub fn new(chunk_sources: Vec<Box<dyn ChunkSource>>) -> Self {
+    pub fn new(chunk_sources: Vec<Box<dyn ChunkLoader>>) -> Self {
         Self {
             chunks: Arc::new(RwLock::new(HashMap::new())),
-            chunk_sources: Arc::new(chunk_sources),
+            chunk_loaders: Arc::new(chunk_sources),
         }
     }
 
@@ -67,7 +67,7 @@ impl World {
                 chunk.subscribe(id, callback);
                 self.chunks.write().unwrap()
                     .insert(coords, chunk);
-                let sources = self.chunk_sources.clone();
+                let sources = self.chunk_loaders.clone();
                 let world = self.chunks.clone();
                 tokio::spawn(async move {
                     if let Some(data) = load_chunk(coords, &*sources).await {
@@ -120,7 +120,7 @@ impl World {
     }
 }
 
-async fn load_chunk(coords: ChunkCoords, sources: &Vec<Box<dyn ChunkSource>>) 
+async fn load_chunk(coords: ChunkCoords, sources: &Vec<Box<dyn ChunkLoader>>) 
     -> Option<ChunkData>
 {
     for source in sources {

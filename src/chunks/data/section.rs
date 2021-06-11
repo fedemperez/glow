@@ -6,8 +6,8 @@ use crate::serialization::{CompactLong, push_varint};
 
 use super::palette::Palette;
 
-pub const SECTION_LENGTH: usize = 16;
-const BLOCKS_PER_SECTION: usize = SECTION_LENGTH.pow(3);
+pub const SECTION_WIDTH: usize = 16;
+const BLOCKS_PER_SECTION: usize = SECTION_WIDTH.pow(3);
 const GLOBAL_PALETTE_BITS: u8 = 15;
 const MAX_PALETTE_BITS: u8 = 8;
 
@@ -66,7 +66,7 @@ impl Section {
     }
 
     const fn coords_to_index(x: usize, y: usize, z: usize) -> usize {
-        x + z * SECTION_LENGTH + y * SECTION_LENGTH * SECTION_LENGTH
+        x + z * SECTION_WIDTH + y * SECTION_WIDTH * SECTION_WIDTH
     }
 
     fn count_non_air(&self) -> u16 {

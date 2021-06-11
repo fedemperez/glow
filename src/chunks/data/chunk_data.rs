@@ -6,73 +6,60 @@ use anvil_region::{
     provider::{FolderRegionProvider, RegionProvider}};
 
 use block_macro::block_id;
-use nbt::{Map, Value};
 
-use crate::{
-    common::block::Block, 
-    serialization::CompactLong};
+use crate::common::block::Block;
+use crate::chunks::ChunkCoords;
 
-use super::{ChunkCoords, section::{Section, SECTION_LENGTH}};
-
-pub const CHUNK_HEIGHT: usize = 256;
-pub const CHUNK_WIDTH: usize = SECTION_LENGTH;
+use super::{
+    CHUNK_HEIGHT, 
+    heightmap::HeightMap, 
+    section::{Section, SECTION_WIDTH}
+};
 
 pub struct ChunkData {
     sections: Vec<Option<Section>>,
+    pub heightmap: HeightMap,
 }
 
 impl ChunkData {
     pub fn new() -> Self {
         Self {
             sections: repeat_with(|| None)
-            .take(CHUNK_HEIGHT / SECTION_LENGTH)
-            .collect(),
+                .take(CHUNK_HEIGHT / SECTION_WIDTH)
+                .collect(),
+            heightmap: HeightMap::new(),
         }
     }
     
     pub fn from_sections(sections: Vec<Option<Section>>) -> Self {
-        Self { sections }
+        Self {
+            sections,
+            heightmap: HeightMap::new(),
+        }
     }
 
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> Block {
-        let section = y / SECTION_LENGTH;
+        let section = y / SECTION_WIDTH;
         match &self.sections[section] {
             Some(section) => {
-                section.get_block(x, y % SECTION_LENGTH, z)
+                section.get_block(x, y % SECTION_WIDTH, z)
             }
             None => Block(block_id!(air)),
         }
     }
 
     pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: Block) {
-        let section = y / SECTION_LENGTH;
+        let section = y / SECTION_WIDTH;
         match &mut self.sections[section] {
             Some(section) => {
-                section.set_block(x, y % SECTION_LENGTH, z, block)
+                section.set_block(x, y % SECTION_WIDTH, z, block)
             }
             None => {
                 let mut new_sect = Section::new();
-                new_sect.set_block(x, y % SECTION_LENGTH, z, block);
+                new_sect.set_block(x, y % SECTION_WIDTH, z, block);
                 self.sections[section] = Some(new_sect);
             }
         }
-    }
-
-    fn get_height(&self, x: usize, z: usize) -> u16 {
-        1
-    }
-
-    pub fn get_heightmap(&self) -> Value {
-        let mut heights = Vec::with_capacity(CHUNK_WIDTH * CHUNK_WIDTH);
-        for x in 0..CHUNK_WIDTH {
-            for z in 0..CHUNK_WIDTH {
-                heights.push(self.get_height(x, z));
-            }
-        }
-        let heights = CompactLong::from_values(&heights, 9);
-        let mut map = Map::new();
-        map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights.longs));
-        Value::Compound(map)
     }
 
     pub fn get_biome_map(&self) -> Vec<u16> {
