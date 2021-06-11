@@ -9,17 +9,22 @@ impl ClientboundPacket {
         where W: AsyncWrite + Unpin
     {
         match self {
-            Self::JoinGame { entity_id, gamemode, dimension_codec, dimension, view_distance } => {
-                PacketBuilder::new(0x24)
-                    .add_bytes(&entity_id.to_be_bytes()) // Entity ID
+            Self::JoinGame { 
+                entity_id, gamemode, world_names, dimension_codec, dimension, 
+                current_world, view_distance,
+            } => {
+                let mut pack = PacketBuilder::new(0x24);
+                pack.add_bytes(&entity_id.to_be_bytes()) // Entity ID
                     .add_bytes(&[0]) // Is hardcore
                     .add_bytes(&[*gamemode]) // Gamemode
                     .add_bytes(&[*gamemode]) // Prev gamemode
-                    .add_varint(1) // Size of following array
-                    .add_str("world") // World names array
-                    .add_nbt(dimension_codec) // Dimension codec
-                    .add_nbt(dimension) // Dimension
-                    .add_str("world") // World where the player is spawning
+                    .add_varint(world_names.len() as u32);
+                for name in world_names {
+                    pack.add_str(&name);
+                }
+                pack.add_bytes(dimension_codec)
+                    .add_bytes(dimension)
+                    .add_str(&current_world)
                     .add_bytes(&[0; 8]) // First 8 bytes of the SHA-256 of the seed
                     .add_varint(0) // Max players, unused
                     .add_varint(*view_distance as u32) // View distance

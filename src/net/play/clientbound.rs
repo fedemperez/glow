@@ -25,8 +25,10 @@ pub enum ClientboundPacket {
     JoinGame {
         entity_id: u32,
         gamemode: u8,
-        dimension_codec: Nbt,
-        dimension: Nbt,
+        world_names: Vec<String>,
+        dimension_codec: &'static[u8],
+        dimension: &'static[u8],
+        current_world: String,
         view_distance: u8,
     },
     PluginMessage {
