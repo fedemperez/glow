@@ -8,7 +8,9 @@ use anvil_region::{
 use block_macro::block_id;
 use nbt::{Map, Value};
 
-use crate::{common::block::Block, serialization::write_compacted_long};
+use crate::{
+    common::block::Block, 
+    serialization::CompactLong};
 
 use super::{ChunkCoords, section::{Section, SECTION_LENGTH}};
 
@@ -67,9 +69,9 @@ impl ChunkData {
                 heights.push(self.get_height(x, z));
             }
         }
-        let heights = write_compacted_long(&heights, 9);
+        let heights = CompactLong::from_values(&heights, 9);
         let mut map = Map::new();
-        map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights));
+        map.insert("MOTION_BLOCKING".into(), Value::LongArray(heights.longs));
         Value::Compound(map)
     }
 

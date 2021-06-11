@@ -2,7 +2,7 @@ use anvil_nbt::CompoundTag;
 use block_macro::block_id;
 
 use crate::common::block::Block;
-use crate::serialization::{CompactedLong, push_varint};
+use crate::serialization::{CompactLong, push_varint};
 
 use super::palette::Palette;
 
@@ -12,7 +12,7 @@ const GLOBAL_PALETTE_BITS: u8 = 15;
 const MAX_PALETTE_BITS: u8 = 8;
 
 pub struct Section {
-    blocks: CompactedLong,
+    blocks: CompactLong,
     palette: Option<Palette>,
 }
 
@@ -21,14 +21,14 @@ impl Section {
         let mut palette = Palette::new();
         palette.get_or_add_id(Block(block_id!(air)));
         Self {
-            blocks: CompactedLong::new(vec![0; BLOCKS_PER_SECTION / (64 / 4)], 4),
+            blocks: CompactLong::new(vec![0; BLOCKS_PER_SECTION / (64 / 4)], 4),
             palette: Some(palette),
         }
     }
 
     pub fn from_raw(blocks: Vec<i64>, palette: Palette) -> Self {
         Self {
-            blocks: CompactedLong::new(blocks, palette.get_bits_per_block()),
+            blocks: CompactLong::new(blocks, palette.get_bits_per_block()),
             palette: Some(palette),
         }
     }
