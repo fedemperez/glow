@@ -1,7 +1,7 @@
 use legion::*;
 use tokio::sync::mpsc::UnboundedSender;
 use world::SubWorld;
-use crate::net::packets::play::{ClientboundPacket, PlayerInfo};
+use crate::net::{ClientboundPacket, PlayerInfo};
 use crate::net::{PlayerConnection, Server};
 use std::mem::take;
 use std::collections::HashMap;

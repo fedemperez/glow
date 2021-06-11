@@ -16,7 +16,7 @@ use crate::entities::Position;
 use crate::entities::Rotation;
 use crate::inventory::Inventory;
 use crate::net::PlayerConnection;
-use crate::net::packets::play::ClientboundPacket;
+use crate::net::ClientboundPacket;
 use crate::util::get_time_millis;
 use player_list::{PlayerList, update_player_list_system};
 use chunk_viewer::update_chunk_view_system;

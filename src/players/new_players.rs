@@ -17,7 +17,7 @@ use crate::entities::EntityIdGenerator;
 use crate::entities::Rotation;
 use crate::net::PlayerConnection;
 use crate::net::Server;
-use crate::net::packets::play::ClientboundPacket;
+use crate::net::ClientboundPacket;
 use crate::inventory::Inventory;
 
 pub struct JoiningPlayer {

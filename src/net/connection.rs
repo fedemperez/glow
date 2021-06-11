@@ -4,7 +4,7 @@ use std::sync::Mutex;
 use std::sync::mpsc::{Sender, Receiver, channel};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
-use super::packets::play::{ServerboundPacket, ClientboundPacket};
+use super::play::{ServerboundPacket, ClientboundPacket};
 
 pub struct PlayerConnection {
     receiver: Mutex<Receiver<ServerboundPacket>>,

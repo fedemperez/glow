@@ -1,12 +1,11 @@
-mod handshaking;
-mod status;
-pub mod packets;
-mod login;
+mod initial_handling;
 mod play;
-mod dimension_codec;
 mod server;
 mod connection;
-mod status_gen;
+mod builder;
+mod value_readers;
+mod server_info;
 
 pub use server::Server;
 pub use connection::PlayerConnection;
+pub use play::{ClientboundPacket, ServerboundPacket, PlayerInfo};

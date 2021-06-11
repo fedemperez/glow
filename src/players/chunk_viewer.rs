@@ -8,7 +8,7 @@ use crate::chunks::events::ChunkEvent;
 use crate::net::PlayerConnection;
 use crate::entities::{EntityId, Position};
 use crate::chunks::{ChunkCoords, World as Chunks};
-use crate::net::packets::play::ClientboundPacket;
+use crate::net::ClientboundPacket;
 
 #[system(for_each)]
 pub fn update_chunk_view(id: &EntityId, pos: &Position, view: &mut ChunkViewer, 

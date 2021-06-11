@@ -6,7 +6,7 @@ use crate::buckets::{EntityTracker, Observer};
 use crate::buckets::events::{EntityEvent, EntityEventData};
 use crate::entities::{EntityId, Position, Rotation};
 use crate::net::PlayerConnection;
-use crate::net::packets::play::ClientboundPacket;
+use crate::net::ClientboundPacket;
 
 #[system]
 #[read_component(Uuid)]

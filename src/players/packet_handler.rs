@@ -6,7 +6,7 @@ use crate::buckets::events::{EntityEvent, EntityEventData};
 use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
-use crate::net::packets::play::ServerboundPacket;
+use crate::net::ServerboundPacket;
 use crate::chunks::World as ChunkWorld;
 use crate::common::block::Block;
 use super::disconnections::DisconnectionQueue;
