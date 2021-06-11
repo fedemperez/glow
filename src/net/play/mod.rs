@@ -3,7 +3,6 @@ mod reader;
 mod clientbound;
 mod serverbound;
 mod errors;
-mod dimension_codec;
 
 pub use clientbound::{ClientboundPacket, PlayerInfo, PlayerInfoProperty};
 pub use serverbound::ServerboundPacket;
@@ -13,7 +12,6 @@ use anyhow::Result;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, BufReader};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
-use dimension_codec::gen_default_dim;
 use super::connection::GameConnection;
 use errors::UnknownPacket;
 
