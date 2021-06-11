@@ -70,7 +70,9 @@ impl Section {
     }
 
     fn count_non_air(&self) -> u16 {
-        16
+        // Temporary fix, the client could unload the section unexpectedly
+        // if this is below the real value
+        (SECTION_WIDTH * SECTION_WIDTH * SECTION_WIDTH) as u16
     }
 
     pub fn push_data(&self, data: &mut Vec<u8>) {

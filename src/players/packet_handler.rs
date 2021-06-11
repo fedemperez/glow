@@ -104,7 +104,7 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                     if let Some(block) = 
                         Block::from_name(item.id.to_str().unwrap()) 
                     {
-                        chunks.set_block(x, y, z, block)
+                        chunks.set_block(x, y, z, block);
                     }
                 }
             },
