@@ -70,7 +70,7 @@ impl Section {
     }
 
     fn count_non_air(&self) -> u16 {
-        // Temporary fix, the client could unload the section unexpectedly
+        // Temporary fix, the client can unload the section unexpectedly
         // if this is below the real value
         (SECTION_WIDTH * SECTION_WIDTH * SECTION_WIDTH) as u16
     }

@@ -54,7 +54,7 @@ pub async fn on_stop(world: &mut World, resources: &mut Resources) {
     for (uuid, pos, rot, inv, conn) in query.iter(world) {
         conn.send(ClientboundPacket::Disconnect {
             reason: json!({
-                "text": "Server is closing :(",
+                "text": "Server closing :(",
             }),
         });
         PlayerData {

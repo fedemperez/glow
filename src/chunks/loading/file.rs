@@ -56,11 +56,11 @@ impl ChunkLoader for AnvilChunkLoader {
 }
 
 async fn read_chunk(coords: ChunkCoords) -> Option<CompoundTag> {
-    let ChunkCoords(chunk_x, chunk_y) = coords;
+    let ChunkCoords(chunk_x, chunk_z) = coords;
     let region_position = 
-        RegionPosition::from_chunk_position(chunk_x, chunk_y);
+        RegionPosition::from_chunk_position(chunk_x, chunk_z);
     let chunk_position = 
-        RegionChunkPosition::from_chunk_position(chunk_x, chunk_y);
+        RegionChunkPosition::from_chunk_position(chunk_x, chunk_z);
     task::spawn_blocking(move || {
         let provider = FolderRegionProvider::new("world/region");
         let mut region = provider.get_region(region_position).ok()?;

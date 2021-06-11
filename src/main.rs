@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         if start.elapsed() < TICK_INTERVAL {
             sleep(TICK_INTERVAL - start.elapsed()).await;
         } else {
-            println!("Server is lagging :(, last update took {}ms", 
+            println!("The server is lagging :(, last update took {}ms", 
                 start.elapsed().as_millis());
         }
         if STOP_SIGNAL.load(Ordering::Relaxed) {
