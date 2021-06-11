@@ -1,9 +1,10 @@
 use std::iter::repeat_with;
-
+use anyhow::{anyhow, Result};
 use anvil_nbt::CompoundTag;
 use anvil_region::{
     position::{RegionChunkPosition, RegionPosition}, 
-    provider::{FolderRegionProvider, RegionProvider}};
+    provider::{FolderRegionProvider, RegionProvider},
+    error::ChunkWriteError};
 
 use block_macro::block_id;
 
@@ -88,7 +89,7 @@ impl ChunkData {
         bytes
     }
 
-    pub fn save(&self, coords: ChunkCoords) {
+    pub fn save(&self, coords: ChunkCoords) -> Result<()> {
         let provider = FolderRegionProvider::new("world/region");
         let ChunkCoords(chunk_x, chunk_z) = coords;
         let region_position = 
@@ -96,7 +97,7 @@ impl ChunkData {
         let region_chunk_position = 
             RegionChunkPosition::from_chunk_position(chunk_x, chunk_z);
 
-        let mut region = provider.get_region(region_position).unwrap();
+        let mut region = provider.get_region(region_position)?;
 
         let mut chunk_tag = CompoundTag::new();
         let mut level_tag = CompoundTag::new();
@@ -111,6 +112,14 @@ impl ChunkData {
         level_tag.insert_compound_tag_vec("Sections", section_tags);
         chunk_tag.insert_compound_tag("Level", level_tag);
 
-        region.write_chunk(region_chunk_position, chunk_tag);
+        region.write_chunk(region_chunk_position, chunk_tag)
+            .map_err(|err| {
+                match err {
+                    ChunkWriteError::LengthExceedsMaximum { length } 
+                    => anyhow!(format!("Too large ({} bytes)", length)),
+                    ChunkWriteError::IOError { io_error } => io_error.into(),
+                }
+            })?;
+        Ok(())
     }
 }

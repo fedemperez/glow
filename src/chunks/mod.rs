@@ -3,6 +3,7 @@ mod world;
 mod coords;
 mod loading;
 mod data;
+mod saving;
 pub mod events;
 
 use std::io::Write;
@@ -24,6 +25,6 @@ pub fn register(schedule: &mut Builder, resources: &mut Resources) {
 pub async fn on_stop(resources: &mut Resources) {
     print!("Saving chunks...         ");
     let _ = std::io::stdout().flush();
-    resources.get::<World>().unwrap().save_all();
+    resources.get_mut::<World>().unwrap().save_all();
     println!("Done");
 }

@@ -4,6 +4,7 @@ use crate::common::block::Block;
 use super::ChunkCoords;
 use super::ChunkData;
 use super::events::ChunkEvent;
+use super::saving::ChunkSaver;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -79,9 +80,9 @@ impl Chunk {
         }
     }
 
-    pub fn save(&self, coords: ChunkCoords) {
+    pub fn save(&self, coords: ChunkCoords, saver: &mut ChunkSaver) {
         if let Some(data) = &self.data {
-            data.read().unwrap().save(coords);
+            saver.save(coords, data.clone());
         }
     }
 

@@ -3,9 +3,11 @@ use super::ChunkData;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
 use super::events::ChunkEvent;
+use super::saving::ChunkSaver;
 use block_macro::block_id;
 use legion::system;
 use legion::systems::Builder;
+use std::sync::Mutex;
 use std::time::Duration;
 use std::collections::HashMap;
 use super::loading::ChunkLoader;
@@ -23,18 +25,18 @@ fn unload_chunks(#[resource] world: &mut World) {
     let mut removed = vec![];
     for (coords, chunk) in world.chunks.read().unwrap().iter() {
         if chunk.time_unobserved() > CHUNK_UNLOAD_TIME {
-            removed.push((*coords, chunk.clone()));
+            removed.push(*coords);
             if removed.len() == MAX_UNLOADS_PER_TICK {
                 break;
             }
         }
     }
     let mut chunks = world.chunks.write().unwrap();
-    for (coords, chunk) in removed {
-        tokio::task::spawn_blocking(move || {
-            chunk.save(coords);
-        });
-        chunks.remove(&coords);
+    let mut saver = world.saver.lock().unwrap();
+    for coords in removed {
+        if let Some(chunk) = chunks.remove(&coords) {
+            chunk.save(coords, &mut saver);
+        }
     }
 }
 
@@ -43,6 +45,7 @@ pub struct World {
         HashMap<ChunkCoords, Chunk>
     >>,
     chunk_loaders: Arc<Vec<Box<dyn ChunkLoader>>>,
+    saver: Mutex<ChunkSaver>,
 }
 
 impl World {
@@ -50,6 +53,7 @@ impl World {
         Self {
             chunks: Arc::new(RwLock::new(HashMap::new())),
             chunk_loaders: Arc::new(chunk_sources),
+            saver: Mutex::new(ChunkSaver::new()),
         }
     }
 
@@ -112,11 +116,13 @@ impl World {
         }
     }
 
-    pub fn save_all(&self) {
-        let mut chunks = self.chunks.write().unwrap();
+    pub fn save_all(&mut self) {
+        let mut saver = self.saver.lock().unwrap();
+        let chunks = self.chunks.write().unwrap();
         for (coords, chunk) in chunks.iter() {
-            chunk.save(*coords);
+            chunk.save(*coords, &mut saver);
         }
+        saver.wait_completion();
     }
 }
 
