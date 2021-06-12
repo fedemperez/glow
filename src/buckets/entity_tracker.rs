@@ -1,9 +1,20 @@
-use std::{collections::HashMap, sync::{Arc, RwLock}};
+use std::{collections::HashMap, sync::{Arc, RwLock}, time::Duration};
 use nalgebra::Vector3;
 use legion::*;
 use tokio::sync::broadcast::Receiver;
 
 use super::{bucket::Bucket, coords::BucketCoords, events::{EntityEvent, EntityEventData}};
+
+const UNLOAD_TIME: Duration = Duration::from_secs(10);
+
+#[system]
+pub fn unload_buckets(#[resource] tracker: &mut EntityTracker) {
+    let buckets = tracker.buckets.get_mut().unwrap();
+    buckets.retain(|_, bucket| {
+        let mut bucket = bucket.write().unwrap();
+        bucket.time_unobserved() < UNLOAD_TIME
+    });
+}
 
 pub struct EntityTracker {
     buckets: RwLock<HashMap<BucketCoords, Arc<RwLock<Bucket>>>>,

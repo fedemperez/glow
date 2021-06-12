@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::{Duration, Instant}};
 use legion::Entity;
 use tokio::sync::broadcast::{Sender, Receiver, channel};
 
@@ -7,13 +7,15 @@ use super::events::EntityEvent;
 pub struct Bucket {
     entities: HashMap<u32, Entity>,
     events: Sender<EntityEvent>,
+    last_observed: Option<Instant>,
 }
 
 impl Bucket {
     pub fn new() -> Self {
         Self {
             entities: HashMap::new(),
-            events: channel(128).0,
+            events: channel(64).0,
+            last_observed: None,
         }
     }
 
@@ -35,7 +37,23 @@ impl Bucket {
         self.events.send(event);
     }
 
-    pub fn subscribe(&self) -> Receiver<EntityEvent> {
+    pub fn subscribe(&self, ) -> Receiver<EntityEvent> {
         self.events.subscribe()
+    }
+
+    pub fn time_unobserved(&mut self) -> Duration {
+        self.update_observer_count();
+        let time = self.last_observed.unwrap_or(Instant::now());
+        Instant::now() - time
+    }
+
+    fn update_observer_count(&mut self) {
+        if self.events.receiver_count() == 0 {
+            if self.last_observed.is_none() {
+                self.last_observed = Some(Instant::now());
+            }
+        } else {
+            self.last_observed = None;
+        }
     }
 }
