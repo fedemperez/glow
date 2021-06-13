@@ -101,7 +101,15 @@ impl Section {
             let mut pale_nbt = vec![];
             for block in &palette.entries {
                 let mut block_nbt = CompoundTag::new();
-                block_nbt.insert_str("Name", block.get_name().as_str());
+                let (name, props) = block.get_props();
+                block_nbt.insert_str("Name", &name);
+                if props.len() > 0 {
+                    let mut props_nbt = CompoundTag::new();
+                    for (name, value) in props {
+                        props_nbt.insert_str(&name, &value);
+                    }
+                    block_nbt.insert_compound_tag("Properties", props_nbt);
+                }
                 pale_nbt.push(block_nbt);
             }
             tag.insert_compound_tag_vec("Palette", pale_nbt);

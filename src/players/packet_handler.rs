@@ -101,11 +101,11 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             } => {
                 let (x, y, z) = face.get_adjacent(location);
                 if let Some(item) = inventory.get_held() {
-                    if let Some(block) = 
+                    /*if let Some(block) = 
                         Block::from_name(item.id.to_str().unwrap()) 
                     {
                         chunks.set_block(x, y, z, block);
-                    }
+                    }*/
                 }
             },
             ServerboundPacket::Disconnect { reason } => {

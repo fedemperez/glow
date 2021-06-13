@@ -1,6 +1,7 @@
+use std::collections::BTreeMap;
 use std::iter::repeat_with;
 
-use anvil_nbt::CompoundTag;
+use anvil_nbt::{CompoundTag, Tag};
 use anvil_region::position::RegionChunkPosition;
 use anvil_region::position::RegionPosition;
 use anvil_region::provider::RegionProvider;
@@ -37,14 +38,13 @@ impl ChunkLoader for AnvilChunkLoader {
             .take(SECTIONS_PER_CHUNK)
             .collect();
         for tag in section_tags {
-            if let Ok(palette) = 
-                tag.get_compound_tag_vec("Palette") 
-            {
-                let palette_entries: Vec<Block> = palette.into_iter()
-                    .map(|tag| tag.get_str("Name").unwrap())
-                    .map(|name| Block::from_name(name).unwrap())
-                    .collect();
-                let palette = Palette::from_entries(palette_entries.as_slice());
+            if let Ok(palette) = tag.get_compound_tag_vec("Palette") {
+                let mut entries: Vec<Block> = palette.iter().map(|block_tag| {
+                    let name = block_tag.get_str("Name").unwrap();
+                    let props = get_properties(block_tag);
+                    Block::from_props(&name, &props).unwrap()
+                }).collect();
+                let palette = Palette::from_entries(entries.as_slice());
                 let blocks = tag.get_i64_vec("BlockStates").unwrap();
                 let section = Section::from_raw(blocks.clone(), palette);
                 let y = tag.get_i8("Y").unwrap() as usize;
@@ -66,4 +66,16 @@ async fn read_chunk(coords: ChunkCoords) -> Option<CompoundTag> {
         let mut region = provider.get_region(region_position).ok()?;
         region.read_chunk(chunk_position).ok()
     }).await.ok()?
+}
+
+fn get_properties(tag: &CompoundTag) -> BTreeMap<String, String> {
+    let mut map = BTreeMap::new();
+    if let Ok(props) = tag.get_compound_tag("Properties") {
+        for (name, tag) in props.iter() {
+            if let Tag::String(value) = tag {
+                map.insert(name.clone(), value.clone());
+            }
+        }
+    }
+    map
 }
