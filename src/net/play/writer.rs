@@ -234,6 +234,11 @@ impl ClientboundPacket {
                     .add_str(&reason.to_string())
                     .write(writer).await
             }
+            Self::Tags{ raw } => {
+                PacketBuilder::new(0x5B)
+                    .add_bytes(raw)
+                    .write(writer).await
+            }
         }
     }
 }

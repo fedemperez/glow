@@ -12,6 +12,8 @@ use anyhow::Result;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, BufReader};
 use std::sync::mpsc::Sender;
 use tokio::sync::mpsc::UnboundedReceiver;
+use crate::tags::TAG_PACKET;
+
 use super::connection::GameConnection;
 use errors::UnknownPacket;
 
@@ -73,5 +75,9 @@ async fn send_initial_packets<W>(writer: &mut W) -> Result<()>
     ClientboundPacket::PluginMessage {
         channel: "minecraft:brand".into(),
         content: BRAND.into(),
-    }.send(writer).await
+    }.send(writer).await?;
+    ClientboundPacket::Tags {
+        raw: TAG_PACKET,
+    }.send(writer).await?;
+    Ok(())
 }

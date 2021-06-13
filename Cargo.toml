@@ -7,6 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+block_macro = { path = "./src/common/block/block_macro" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 thiserror = "1.0.24"
@@ -24,7 +25,6 @@ lazy_static = "1.4.0"
 bimap = { version = "0.6.1", features = ["serde"] }
 num-traits = "0.2"
 num-derive = "0.3"
-block_macro = { path = "./src/common/block/block_macro" }
 anvil-region = "0.8"
 anvil-nbt = { version = "0.3.0", package = "named-binary-tag" }
 ctrlc = "3.1.9"

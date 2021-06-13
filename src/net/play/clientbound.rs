@@ -111,4 +111,7 @@ pub enum ClientboundPacket {
     Disconnect {
         reason: Json,
     },
+    Tags {
+        raw: &'static [u8],
+    }
 }

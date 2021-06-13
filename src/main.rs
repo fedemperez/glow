@@ -8,6 +8,7 @@ mod buckets;
 mod inventory;
 mod common;
 mod serialization;
+mod tags;
 
 use std::{
     sync::atomic::{AtomicBool, Ordering}, 
