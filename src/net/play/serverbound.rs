@@ -1,3 +1,4 @@
+use nalgebra::Vector3;
 use nbt::Value as Nbt;
 use crate::common::{
     item_stack::ItemStack,
@@ -40,7 +41,7 @@ pub enum ServerboundPacket {
         hand: u8,
         location: (i32, i32, i32),
         face: BlockFace,
-        cursor_position: (f32, f32, f32),
+        cursor_position: Vector3<f32>,
         inside_block: bool,
     },
     Disconnect {

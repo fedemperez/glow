@@ -68,6 +68,7 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                     }
                 );
                 position.0 = new_position;
+                *rotation = Rotation(yaw, pitch);
             },
             ServerboundPacket::PlayerDigging {
                 status, position: (x, y, z), face
@@ -97,14 +98,13 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 }
             },
             ServerboundPacket::PlayerBlockPlacement {
-                hand, location, face, ..
+                hand, location, face, cursor_position, ..
             } => {
                 let (x, y, z) = face.get_adjacent(location);
                 if let Some(stack) = inventory.get_held() {
                     if let Some(block_type) = stack.item.get_block() {
-                        let block_pos = vector!(x as f64, y as f64, z as f64);
-                        let dir = position.0 - block_pos;
-                        let block = block_type.place(face, dir);
+                        let block = block_type.place(face, cursor_position, 
+                            (rotation.0, rotation.1));
                         chunks.set_block(x, y, z, block);
                     }
                 }

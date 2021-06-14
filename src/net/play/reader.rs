@@ -1,5 +1,6 @@
 use std::io::Cursor;
 
+use nalgebra::vector;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use anyhow::{Result, anyhow};
 use crate::common::item_stack::{ItemStack, ItemType};
@@ -92,7 +93,7 @@ impl ServerboundPacket {
                     hand, location, inside_block,
                     face: FromPrimitive::from_u32(face)
                         .ok_or(anyhow!("Invalid packet"))?, 
-                    cursor_position: (cursor_x, cursor_y, cursor_z),
+                    cursor_position: vector!(cursor_x, cursor_y, cursor_z),
                 })
             }
             id => Err(UnknownPacket(id).into()),
