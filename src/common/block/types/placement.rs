@@ -1,60 +1,105 @@
 use std::collections::BTreeMap;
 
+use block_macro::block_id;
 use nalgebra::Vector3;
 
-use crate::common::block::states::get_state;
+use crate::chunks::World;
+use crate::common::block::states::{get_defaults, get_state};
 use crate::common::block::{Block, BlockFace};
 use super::BlockClass;
 use super::BlockType;
 
 impl BlockType {
-    pub fn place(&self, face: BlockFace, cursor: Vector3<f32>, angle: (f32, f32)) 
-        -> Block 
+    pub fn place(&self, pos: (i32, i32, i32), world: &World, face: BlockFace, 
+        cursor: Vector3<f32>, angle: (f32, f32))
     {
-        let state = match self.class {
-            BlockClass::PillarBlock => {
-                let axis = axis_from_face(&face);
-                let mut props = BTreeMap::new();
-                props.insert("axis".to_string(), axis);
-                get_state(&self.name, &props).unwrap()
-            },
+        let (x, y, z) = pos;
+        let mut props = self.auto_fill_props(pos, world, &face, cursor, angle);
+        match self.class {
             BlockClass::StairsBlock => {
-                let mut props = BTreeMap::new();
-                props.insert("facing".into(), facing_from_yaw(angle.0));
-                props.insert("half".into(), calc_half(&face, &cursor));
-                props.insert("shape".into(), "straight".into());
-                props.insert("waterlogged".into(), "false".into());
-                get_state(&self.name, &props).unwrap()
+                *props.get_mut("facing").unwrap() = 
+                    facing_from_angle(angle.0 + 180.0);
+            },
+            BlockClass::EndRodBlock => {
+                *props.get_mut("facing").unwrap() = 
+                    facing_from_face(&face);
+            },
+            BlockClass::LadderBlock => {
+                match face {
+                    BlockFace::PosY | BlockFace::NegY => return,
+                    face => {
+                        *props.get_mut("facing").unwrap() = 
+                            facing_from_face(&face);
+                    }
+                }
             },
             BlockClass::SlabBlock => {
-                let mut props = BTreeMap::new();
-                props.insert("type".into(), calc_half(&face, &cursor));
-                props.insert("waterlogged".into(), "false".into());
-                get_state(&self.name, &props).unwrap()
+                *props.get_mut("type").unwrap() = calc_half(&face, &cursor);
             },
-            _ => self.default_state,
-        };
-        Block(state)
+            BlockClass::DoorBlock => {
+                if world.get_block(x, y + 1, z).0 != block_id!(air) {
+                    return;
+                }
+                *props.get_mut("facing").unwrap() = 
+                    facing_from_angle(angle.0 + 180.0);
+                *props.get_mut("half").unwrap() = "upper".into();
+                let block = Block(get_state(&self.name, &props).unwrap());
+                world.set_block(x, y + 1, z, block);
+                *props.get_mut("half").unwrap() = "lower".into();
+            },
+            _ => (),
+        }
+        let block = Block(get_state(&self.name, &props).unwrap());
+        world.set_block(x, y, z, block);
+    }
+
+    fn auto_fill_props(&self, pos: (i32, i32, i32), world: &World, face: &BlockFace, 
+        cursor: Vector3<f32>, angle: (f32, f32)) -> BTreeMap<String, String>
+    {
+        let (x, y, z) = pos;
+        let mut props = get_defaults(&self.name).unwrap().clone();
+        if let Some(axis) = props.get_mut("axis") {
+            *axis = match face {
+                BlockFace::NegX | BlockFace::PosX
+                    => "x".to_string(),
+                BlockFace::NegY | BlockFace::PosY 
+                    => "y".to_string(),
+                BlockFace::NegZ | BlockFace::PosZ
+                    => "z".to_string(),
+            };
+        }
+        if let Some(facing) = props.get_mut("facing") {
+            *facing = facing_from_angle(angle.0);
+        }
+        if let Some(half) = props.get_mut("half") {
+            *half = calc_half(&face, &cursor);
+        }
+        if let Some(waterlogged) = props.get_mut("waterlogged") {
+            if world.get_block(x, y, z).0 == block_id!(water) {
+                *waterlogged = "true".into();
+            }
+        }
+        props
     }
 }
 
-fn axis_from_face(face: &BlockFace) -> String {
-    match face {
-        BlockFace::NegX | BlockFace::PosX
-            => "x".to_string(),
-        BlockFace::NegY | BlockFace::PosY 
-            => "y".to_string(),
-        BlockFace::NegZ | BlockFace::PosZ
-            => "z".to_string(),
-    }
-}
-
-fn facing_from_yaw(yaw: f32) -> String {
+fn facing_from_angle(yaw: f32) -> String {
     match (yaw + 45.0).rem_euclid(360.0) {
-        x if x < 90.0 => "south",
-        x if x < 180.0 => "west",
-        x if x < 270.0 => "north",
-        _ => "east",
+        x if x < 90.0 => "north",
+        x if x < 180.0 => "east",
+        x if x < 270.0 => "south",
+        _ => "west",
+    }.into()
+}
+
+fn facing_from_face(face: &BlockFace) -> String {
+    match face {
+        BlockFace::PosX => "east",
+        BlockFace::NegX => "west",
+        BlockFace::PosY => "up",
+        BlockFace::NegY => "down",
+        BlockFace::PosZ => "south",
+        BlockFace::NegZ => "north",
     }.into()
 }
 

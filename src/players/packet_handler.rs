@@ -100,12 +100,14 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             ServerboundPacket::PlayerBlockPlacement {
                 hand, location, face, cursor_position, ..
             } => {
-                let (x, y, z) = face.get_adjacent(location);
                 if let Some(stack) = inventory.get_held() {
                     if let Some(block_type) = stack.item.get_block() {
-                        let block = block_type.place(face, cursor_position, 
+                        block_type.place(
+                            face.get_adjacent(location),
+                            chunks,
+                            face,
+                            cursor_position, 
                             (rotation.0, rotation.1));
-                        chunks.set_block(x, y, z, block);
                     }
                 }
             },
