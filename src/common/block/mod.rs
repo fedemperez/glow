@@ -1,11 +1,13 @@
 mod face;
-mod id;
+mod states;
+mod types;
 
 use std::collections::BTreeMap;
 
 pub use face::BlockFace;
 
-use self::id::{get_state, get_name_props};
+use self::states::{get_state, get_name_props};
+pub use types::BlockType;
 
 #[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 pub struct Block(pub u16);

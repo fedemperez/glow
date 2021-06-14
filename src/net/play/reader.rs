@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 use tokio::io::{AsyncRead, AsyncReadExt};
 use anyhow::{Result, anyhow};
-use crate::common::item_stack::{ItemStack, ItemId};
+use crate::common::item_stack::{ItemStack, ItemType};
 use num_traits::FromPrimitive;
 
 use super::errors::UnknownPacket;
@@ -71,7 +71,7 @@ impl ServerboundPacket {
                     let id = read_varint(&mut payload).await?;
                     let count = payload.read_u8().await?;
                     Some(ItemStack {
-                        id: ItemId::from_numeric(id),
+                        item: ItemType::from_numeric(id as u16)?,
                         count,
                         nbt: None,
                     })

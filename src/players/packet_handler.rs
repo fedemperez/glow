@@ -100,12 +100,13 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 hand, location, face, ..
             } => {
                 let (x, y, z) = face.get_adjacent(location);
-                if let Some(item) = inventory.get_held() {
-                    /*if let Some(block) = 
-                        Block::from_name(item.id.to_str().unwrap()) 
-                    {
+                if let Some(stack) = inventory.get_held() {
+                    if let Some(block_type) = stack.item.get_block() {
+                        let block_pos = vector!(x as f64, y as f64, z as f64);
+                        let dir = position.0 - block_pos;
+                        let block = block_type.place(face, dir);
                         chunks.set_block(x, y, z, block);
-                    }*/
+                    }
                 }
             },
             ServerboundPacket::Disconnect { reason } => {

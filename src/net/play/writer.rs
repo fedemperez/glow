@@ -213,11 +213,11 @@ impl ClientboundPacket {
                 let mut pack = PacketBuilder::new(0x13);
                 pack.add_bytes(&[*window])
                     .add_bytes(&(items.len() as u16).to_be_bytes());
-                for item in items {
-                    pack.add_bytes(&[item.is_some() as u8]);
-                    if let Some(item) = item {
-                        pack.add_varint(item.id.to_numeric());
-                        pack.add_bytes(&[item.count]);
+                for slot in items {
+                    pack.add_bytes(&[slot.is_some() as u8]);
+                    if let Some(stack) = slot {
+                        pack.add_varint(stack.item.to_numeric() as u32);
+                        pack.add_bytes(&[stack.count]);
                         pack.add_bytes(&[0]);
                     }
                 }

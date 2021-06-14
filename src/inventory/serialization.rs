@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use super::{Inventory, ItemStack, SlotIndex};
-use crate::common::item_stack::ItemId;
+use crate::common::item_stack::ItemType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all="PascalCase")] 
@@ -10,7 +10,7 @@ pub struct ItemStackPlayerData {
     pub count: i8,
     pub slot: i8,
     #[serde(rename="id")]
-    pub id: String,
+    pub item: String,
 }
 
 impl TryFrom<Vec<ItemStackPlayerData>> for Inventory {
@@ -20,13 +20,13 @@ impl TryFrom<Vec<ItemStackPlayerData>> for Inventory {
         -> Result<Self, Self::Error> 
     {
         let mut slots = HashMap::new();
-        for item in items {
-            let index = SlotIndex::from_file(item.slot);
-            let id = ItemId::from_str(item.id.as_str())?;
+        for stack in items {
+            let index = SlotIndex::from_file(stack.slot);
+            let item = ItemType::from_str(stack.item.as_str())?;
             slots.insert(index, 
                 ItemStack {
-                    id,
-                    count: item.count as u8,
+                    item,
+                    count: stack.count as u8,
                     nbt: None,
                 });
         }
@@ -39,17 +39,12 @@ impl TryFrom<Vec<ItemStackPlayerData>> for Inventory {
 
 impl From<Inventory> for Vec<ItemStackPlayerData> {
     fn from(inventory: Inventory) -> Self {
-        let mut result = vec![];
-        for (slot, item) in inventory.slots {
-            if let Ok(id) = item.id.to_str() {
-                result.push(
-                    ItemStackPlayerData {
-                        slot: slot.to_file(),
-                        id: id.into(),
-                        count: item.count as i8,
-                    })
+        inventory.slots.into_iter().map(|(slot, stack)| 
+            ItemStackPlayerData {
+                slot: slot.to_file(),
+                item: stack.item.to_str().into(),
+                count: stack.count as i8,
             }
-        }
-        result
+        ).collect()
     }
 }
