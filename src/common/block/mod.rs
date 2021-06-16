@@ -1,10 +1,12 @@
 mod face;
 mod maps;
 mod types;
+mod material;
 
 use std::collections::BTreeMap;
 
 use maps::BLOCK_STATES;
+use material::BlockMaterial;
 
 pub use face::BlockFace;
 pub use types::BlockType;
@@ -12,6 +14,7 @@ pub use types::BlockType;
 pub struct Block {
     pub btype: &'static BlockType,
     pub props: BTreeMap<String, String>,
+    pub material: &'static BlockMaterial,
     pub id: u16,
 }
 

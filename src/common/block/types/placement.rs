@@ -1,6 +1,5 @@
 use std::collections::BTreeMap;
 
-use block_macro::block_id;
 use nalgebra::Vector3;
 
 use crate::chunks::World;
@@ -13,38 +12,67 @@ impl BlockType {
         cursor: Vector3<f32>, angle: (f32, f32))
     {
         let (x, y, z) = pos;
-        let mut props = self.auto_fill_props(pos, world, &face, cursor, angle);
+        let replacing = world.get_block(x, y, z);
+        if !replacing.material.replaceable {
+            return;
+        }
+        let mut props = self.auto_fill_props(replacing, &face, cursor, angle);
         match self.class {
             BlockClass::StairsBlock => {
-                *props.get_mut("facing").unwrap() = 
-                    facing_from_angle(angle.0 + 180.0);
+                props.insert("half".into(), calc_half(&face, &cursor));
+                props.insert("facing".into(),
+                    facing_from_angle(angle.0 + 180.0));
             },
             BlockClass::EndRodBlock => {
-                *props.get_mut("facing").unwrap() = 
-                    facing_from_face(&face);
+                props.insert("facing".into(), facing_from_face(&face));
             },
             BlockClass::LadderBlock => {
                 match face {
                     BlockFace::PosY | BlockFace::NegY => return,
                     face => {
-                        *props.get_mut("facing").unwrap() = 
-                            facing_from_face(&face);
+                        props.insert("facing".into(),
+                            facing_from_face(&face));
                     }
                 }
             },
             BlockClass::SlabBlock => {
-                *props.get_mut("type").unwrap() = calc_half(&face, &cursor);
+                props.insert("type".into(), calc_half(&face, &cursor));
+            },
+            BlockClass::TrapdoorBlock => {
+                props.insert("half".into(), calc_half(&face, &cursor));
             },
             BlockClass::DoorBlock => {
-                if world.get_block(x, y + 1, z).id != block_id!(air) {
+                if !world.get_block(x, y + 1, z).material.replaceable {
                     return;
                 }
-                *props.get_mut("facing").unwrap() = 
-                    facing_from_angle(angle.0 + 180.0);
-                *props.get_mut("half").unwrap() = "upper".into();
+                props.insert("facing".into(), 
+                facing_from_angle(angle.0 + 180.0));
+                props.insert("half".into(), "upper".into());
                 let block = self.with_props(&props).unwrap();
                 world.set_block(x, y + 1, z, block);
-                *props.get_mut("half").unwrap() = "lower".into();
+                props.insert("half".into(), "lower".into());
+            },
+            BlockClass::TallFlowerBlock | BlockClass::TallPlantBlock => {
+                if !can_place_plant_on(world.get_block(x, y - 1, z)) {
+                    return;
+                }
+                if !world.get_block(x, y + 1, z).material.replaceable {
+                    return;
+                }
+                props.insert("half".into(), "upper".into());
+                let block = self.with_props(&props).unwrap();
+                world.set_block(x, y + 1, z, block);
+                props.insert("half".into(), "lower".into());
+            },
+            BlockClass::FlowerBlock | BlockClass::FernBlock => {
+                if !can_place_plant_on(world.get_block(x, y - 1, z)) {
+                    return;
+                }
+            },
+            BlockClass::CropBlock => {
+                if world.get_block(x, y - 1, z).btype.name != "minecraft:farmland" {
+                    return;
+                }
             },
             _ => (),
         }
@@ -52,10 +80,9 @@ impl BlockType {
         world.set_block(x, y, z, block);
     }
 
-    fn auto_fill_props(&self, pos: (i32, i32, i32), world: &World, face: &BlockFace, 
+    fn auto_fill_props(&self, replacing: &Block, face: &BlockFace, 
         cursor: Vector3<f32>, angle: (f32, f32)) -> BTreeMap<String, String>
     {
-        let (x, y, z) = pos;
         let mut props = self.default_state.clone();
         if let Some(axis) = props.get_mut("axis") {
             *axis = match face {
@@ -70,11 +97,8 @@ impl BlockType {
         if let Some(facing) = props.get_mut("facing") {
             *facing = facing_from_angle(angle.0);
         }
-        if let Some(half) = props.get_mut("half") {
-            *half = calc_half(&face, &cursor);
-        }
         if let Some(waterlogged) = props.get_mut("waterlogged") {
-            if world.get_block(x, y, z).btype.name == "minecraft:water" {
+            if replacing.btype.name == "minecraft:water" {
                 *waterlogged = "true".into();
             }
         }
@@ -112,4 +136,9 @@ fn calc_half(face: &BlockFace, cursor: &Vector3<f32>) -> String {
             "top" 
         }
     }.into()
+}
+
+fn can_place_plant_on(block: &Block) -> bool {
+    block.material.name == "minecraft:soil" || 
+    block.material.name == "minecraft:solid_organic"
 }
