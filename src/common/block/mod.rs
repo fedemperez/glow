@@ -1,12 +1,12 @@
 mod face;
-mod map;
+mod maps;
 mod types;
 
 use std::collections::BTreeMap;
 
-pub use face::BlockFace;
+use maps::BLOCK_STATES;
 
-use self::map::{get_block};
+pub use face::BlockFace;
 pub use types::BlockType;
 
 pub struct Block {
@@ -17,6 +17,10 @@ pub struct Block {
 
 impl Block {
     pub fn from_state_id(state: u16) -> Option<&'static Self> {
-        get_block(state)
+        BLOCK_STATES.get(state as usize)
+    }
+
+    pub fn air() -> &'static Self {
+        &BLOCK_STATES[0]
     }
 }

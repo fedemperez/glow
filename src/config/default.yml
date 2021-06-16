@@ -1,2 +1,2 @@
 port: 25565
-motd: "You can change this text in config.yaml :)"
+motd: "You can edit this in config.yml :)"

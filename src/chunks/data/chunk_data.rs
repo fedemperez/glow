@@ -45,7 +45,7 @@ impl ChunkData {
             Some(section) => {
                 section.get_block(x, y % SECTION_WIDTH, z)
             }
-            None => Block::from_state_id(block_id!(air)).unwrap(),
+            None => Block::air(),
         }
     }
 

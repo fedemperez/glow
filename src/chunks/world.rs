@@ -102,7 +102,7 @@ impl World {
             let (x, y, z) = coords.relative(x, y, z);
             chunk.get_block(x, y, z)
         } else {
-            Block::from_state_id(block_id!(air)).unwrap()
+            Block::air()
         }
     }
 

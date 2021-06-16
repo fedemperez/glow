@@ -13,7 +13,7 @@ pub struct Palette {
 impl Palette {
     pub fn new() -> Self {
         Self {
-            entries: vec![Block::from_state_id(block_id!(air)).unwrap()],
+            entries: vec![],
             block_to_entry: HashMap::new(),
         }
     }

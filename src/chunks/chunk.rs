@@ -38,7 +38,7 @@ impl Chunk {
     pub fn get_block(&self, x: usize, y: usize, z: usize) -> &'static Block {
         match &self.data {
             Some(data) => data.read().unwrap().get_block(x, y, z),
-            None => Block::from_state_id(block_id!(air)).unwrap(),
+            None => Block::air(),
         }
     }
 

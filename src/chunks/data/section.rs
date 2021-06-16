@@ -19,7 +19,7 @@ pub struct Section {
 impl Section {
     pub fn new() -> Self {
         let mut palette = Palette::new();
-        palette.get_or_add_id(Block::from_state_id(block_id!(air)).unwrap());
+        palette.get_or_add_id(Block::air());
         Self {
             blocks: CompactLong::new(vec![0; BLOCKS_PER_SECTION / (64 / 4)], 4),
             palette: Some(palette),

@@ -75,12 +75,10 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             } => {
                 match status {
                     0 => {
-                        chunks.set_block(x, y, z, 
-                            Block::from_state_id(block_id!(air)).unwrap());
+                        chunks.set_block(x, y, z, Block::air());
                     },
                     2 => {
-                        chunks.set_block(x, y, z, 
-                            Block::from_state_id(block_id!(air)).unwrap());
+                        chunks.set_block(x, y, z, Block::air());
                     },
                     _ => (),
                 }
