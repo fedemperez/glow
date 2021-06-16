@@ -8,7 +8,7 @@ use anvil_region::provider::RegionProvider;
 use async_trait::async_trait;
 use anvil_region::provider::FolderRegionProvider;
 use tokio::task;
-use crate::common::block::Block;
+use crate::common::block::{Block, BlockType};
 
 use crate::chunks::{
     ChunkData, ChunkCoords,
@@ -39,10 +39,11 @@ impl ChunkLoader for AnvilChunkLoader {
             .collect();
         for tag in section_tags {
             if let Ok(palette) = tag.get_compound_tag_vec("Palette") {
-                let mut entries: Vec<Block> = palette.iter().map(|block_tag| {
+                let entries: Vec<&'static Block> = palette.iter().map(|block_tag| {
                     let name = block_tag.get_str("Name").unwrap();
                     let props = get_properties(block_tag);
-                    Block::from_props(&name, &props).unwrap()
+                    BlockType::from_name(name).unwrap()
+                        .with_props(&props).unwrap()
                 }).collect();
                 let palette = Palette::from_entries(entries.as_slice());
                 let blocks = tag.get_i64_vec("BlockStates").unwrap();

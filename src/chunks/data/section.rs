@@ -19,7 +19,7 @@ pub struct Section {
 impl Section {
     pub fn new() -> Self {
         let mut palette = Palette::new();
-        palette.get_or_add_id(Block(block_id!(air)));
+        palette.get_or_add_id(Block::from_state_id(block_id!(air)).unwrap());
         Self {
             blocks: CompactLong::new(vec![0; BLOCKS_PER_SECTION / (64 / 4)], 4),
             palette: Some(palette),
@@ -33,29 +33,29 @@ impl Section {
         }
     }
 
-    pub fn get_block(&self, x: usize, y: usize, z: usize) -> Block {
+    pub fn get_block(&self, x: usize, y: usize, z: usize) -> &'static Block {
         let index = Self::coords_to_index(x, y, z);
         let block = self.blocks.get(index) as u16;
         if let Some(palette) = &self.palette {
             palette.get_block(block)
         } else {
-            Block(block)
+            Block::from_state_id(block).unwrap()
         }
     }
 
-    pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: Block) {
+    pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: &'static Block) {
         let index = Self::coords_to_index(x, y, z);
         let block = if let Some(palette) = &mut self.palette {
-            let id = palette.get_or_add_id(block);
+            let local_id = palette.get_or_add_id(block);
             if palette.get_bits_per_block() > MAX_PALETTE_BITS {
                 self.convert_to_global_palette();
-                block.0
+                block.id
             } else {
                 self.blocks.set_bits(palette.get_bits_per_block());
-                id
+                local_id
             }
         } else {
-            block.0
+            block.id
         };
         self.blocks.set(index, block as i64);
     }
@@ -83,7 +83,7 @@ impl Section {
             push_varint(palette.entries.len() as u32,
                 data);
             for entry in &palette.entries {
-                push_varint(entry.0 as u32, data);
+                push_varint(entry.id as u32, data);
             }
         } else {
             data.push(GLOBAL_PALETTE_BITS);
@@ -101,11 +101,10 @@ impl Section {
             let mut pale_nbt = vec![];
             for block in &palette.entries {
                 let mut block_nbt = CompoundTag::new();
-                let (name, props) = block.get_props();
-                block_nbt.insert_str("Name", &name);
-                if props.len() > 0 {
+                block_nbt.insert_str("Name", &block.btype.name);
+                if block.props.len() > 0 {
                     let mut props_nbt = CompoundTag::new();
-                    for (name, value) in props {
+                    for (name, value) in &block.props {
                         props_nbt.insert_str(&name, &value);
                     }
                     block_nbt.insert_compound_tag("Properties", props_nbt);

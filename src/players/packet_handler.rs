@@ -76,11 +76,11 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 match status {
                     0 => {
                         chunks.set_block(x, y, z, 
-                            Block(block_id!(air)));
+                            Block::from_state_id(block_id!(air)).unwrap());
                     },
                     2 => {
                         chunks.set_block(x, y, z, 
-                            Block(block_id!(air)));
+                            Block::from_state_id(block_id!(air)).unwrap());
                     },
                     _ => (),
                 }

@@ -35,14 +35,14 @@ impl Chunk {
         })
     }
 
-    pub fn get_block(&self, x: usize, y: usize, z: usize) -> Block {
+    pub fn get_block(&self, x: usize, y: usize, z: usize) -> &'static Block {
         match &self.data {
             Some(data) => data.read().unwrap().get_block(x, y, z),
-            None => Block(block_id!(air)),
+            None => Block::from_state_id(block_id!(air)).unwrap(),
         }
     }
 
-    pub fn set_block(&self, x: usize, y: usize, z: usize, block: Block) {
+    pub fn set_block(&self, x: usize, y: usize, z: usize, block: &'static Block) {
         if let Some(data) = &self.data {
             data.write().unwrap().set_block(x, y, z, block);
             self.emit_event(ChunkEvent::BlockChanged {

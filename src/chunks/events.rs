@@ -12,6 +12,6 @@ pub enum ChunkEvent {
         x: usize,
         y: usize,
         z: usize,
-        new: Block,
+        new: &'static Block,
     },
 }

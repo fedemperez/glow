@@ -94,7 +94,7 @@ impl World {
         }
     }
 
-    pub fn get_block(&self, x: i32, y: i32, z: i32) -> Block {
+    pub fn get_block(&self, x: i32, y: i32, z: i32) -> &'static Block {
         let coords = ChunkCoords::from_block(x, z);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
@@ -102,11 +102,11 @@ impl World {
             let (x, y, z) = coords.relative(x, y, z);
             chunk.get_block(x, y, z)
         } else {
-            Block(block_id!(air))
+            Block::from_state_id(block_id!(air)).unwrap()
         }
     }
 
-    pub fn set_block(&self, x: i32, y: i32, z: i32, block: Block) {
+    pub fn set_block(&self, x: i32, y: i32, z: i32, block: &'static Block) {
         let coords = ChunkCoords::from_block(x, z);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();

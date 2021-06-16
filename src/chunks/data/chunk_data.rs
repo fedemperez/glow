@@ -39,17 +39,17 @@ impl ChunkData {
         }
     }
 
-    pub fn get_block(&self, x: usize, y: usize, z: usize) -> Block {
+    pub fn get_block(&self, x: usize, y: usize, z: usize) -> &'static Block {
         let section = y / SECTION_WIDTH;
         match &self.sections[section] {
             Some(section) => {
                 section.get_block(x, y % SECTION_WIDTH, z)
             }
-            None => Block(block_id!(air)),
+            None => Block::from_state_id(block_id!(air)).unwrap(),
         }
     }
 
-    pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: Block) {
+    pub fn set_block(&mut self, x: usize, y: usize, z: usize, block: &'static Block) {
         let section = y / SECTION_WIDTH;
         match &mut self.sections[section] {
             Some(section) => {

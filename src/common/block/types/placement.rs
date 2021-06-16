@@ -4,7 +4,6 @@ use block_macro::block_id;
 use nalgebra::Vector3;
 
 use crate::chunks::World;
-use crate::common::block::states::{get_defaults, get_state};
 use crate::common::block::{Block, BlockFace};
 use super::BlockClass;
 use super::BlockType;
@@ -37,19 +36,19 @@ impl BlockType {
                 *props.get_mut("type").unwrap() = calc_half(&face, &cursor);
             },
             BlockClass::DoorBlock => {
-                if world.get_block(x, y + 1, z).0 != block_id!(air) {
+                if world.get_block(x, y + 1, z).id != block_id!(air) {
                     return;
                 }
                 *props.get_mut("facing").unwrap() = 
                     facing_from_angle(angle.0 + 180.0);
                 *props.get_mut("half").unwrap() = "upper".into();
-                let block = Block(get_state(&self.name, &props).unwrap());
+                let block = self.with_props(&props).unwrap();
                 world.set_block(x, y + 1, z, block);
                 *props.get_mut("half").unwrap() = "lower".into();
             },
             _ => (),
         }
-        let block = Block(get_state(&self.name, &props).unwrap());
+        let block = self.with_props(&props).unwrap();
         world.set_block(x, y, z, block);
     }
 
@@ -57,7 +56,7 @@ impl BlockType {
         cursor: Vector3<f32>, angle: (f32, f32)) -> BTreeMap<String, String>
     {
         let (x, y, z) = pos;
-        let mut props = get_defaults(&self.name).unwrap().clone();
+        let mut props = self.default_state.clone();
         if let Some(axis) = props.get_mut("axis") {
             *axis = match face {
                 BlockFace::NegX | BlockFace::PosX
@@ -75,7 +74,7 @@ impl BlockType {
             *half = calc_half(&face, &cursor);
         }
         if let Some(waterlogged) = props.get_mut("waterlogged") {
-            if world.get_block(x, y, z).0 == block_id!(water) {
+            if world.get_block(x, y, z).btype.name == "minecraft:water" {
                 *waterlogged = "true".into();
             }
         }
