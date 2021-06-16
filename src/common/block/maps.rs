@@ -4,7 +4,7 @@ use serde::Deserialize;
 use std::collections::{HashMap, BTreeMap};
 
 use super::{Block, BlockType, BlockMaterial};
-use super::types::BlockClass;
+use super::BlockClass;
 
 const MATERIALS_JSON: &str = include_str!("materials.json");
 const BLOCKS_JSON: &str = include_str!("blocks.json");

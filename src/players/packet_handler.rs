@@ -1,4 +1,3 @@
-use block_macro::block_id;
 use legion::*;
 use nalgebra::vector;
 use crate::buckets::EntityTracker;
@@ -8,7 +7,6 @@ use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
 use crate::net::ServerboundPacket;
 use crate::chunks::World as ChunkWorld;
-use crate::common::block::Block;
 use super::disconnections::DisconnectionQueue;
 use crate::inventory::{Inventory, SlotIndex};
 
@@ -75,10 +73,11 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             } => {
                 match status {
                     0 => {
-                        chunks.set_block(x, y, z, Block::air());
+                        let view = chunks.get_view(vector!(x, y, z));
+                        chunks.get_block(x, y, z).destroy(&view);
                     },
                     2 => {
-                        chunks.set_block(x, y, z, Block::air());
+                        
                     },
                     _ => (),
                 }
@@ -100,9 +99,10 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             } => {
                 if let Some(stack) = inventory.get_held() {
                     if let Some(block_type) = stack.item.get_block() {
+                        let view = chunks.get_view(
+                            face.get_adjacent(location));
                         block_type.place(
-                            face.get_adjacent(location),
-                            chunks,
+                            &view,
                             face,
                             cursor_position, 
                             (rotation.0, rotation.1));

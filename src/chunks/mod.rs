@@ -4,6 +4,7 @@ mod coords;
 mod loading;
 mod data;
 mod saving;
+mod view;
 pub mod events;
 
 use std::io::Write;
@@ -11,6 +12,7 @@ use std::io::Write;
 pub use data::ChunkData;
 pub use coords::ChunkCoords;
 pub use world::World;
+pub use view::WorldView;
 use legion::{systems::Builder, Resources};
 use loading::{FlatGenerator, AnvilChunkLoader};
 

@@ -1,7 +1,9 @@
 mod face;
 mod maps;
 mod types;
+mod classes;
 mod material;
+mod behavior;
 
 use std::collections::BTreeMap;
 
@@ -10,6 +12,7 @@ use material::BlockMaterial;
 
 pub use face::BlockFace;
 pub use types::BlockType;
+use classes::BlockClass;
 
 pub struct Block {
     pub btype: &'static BlockType,

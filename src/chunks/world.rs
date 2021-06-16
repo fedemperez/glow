@@ -1,12 +1,15 @@
 use crate::common::block::Block;
+use super::WorldView;
 use super::ChunkData;
+use super::view::adjacent_coords;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
 use super::events::ChunkEvent;
 use super::saving::ChunkSaver;
-use block_macro::block_id;
 use legion::system;
 use legion::systems::Builder;
+use nalgebra::{vector, Vector3};
+use std::mem::take;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::collections::HashMap;
@@ -17,7 +20,22 @@ const CHUNK_UNLOAD_TIME: Duration = Duration::from_secs(10);
 const MAX_UNLOADS_PER_TICK: usize = 2;
 
 pub fn register(schedule: &mut Builder) {
+    schedule.add_system(update_changed_system());
     schedule.add_thread_local(unload_chunks_system());
+}
+
+#[system]
+fn update_changed(#[resource] world: &mut World) {
+    let last_changes = take(&mut world.changed)
+        .into_inner().unwrap();
+    let to_update = last_changes.iter()
+        .map(|pos| adjacent_coords(pos))
+        .flatten();
+    for pos in to_update {
+        let view = world.get_view(pos);
+        let block = world.get_block(pos.x, pos.y, pos.z);
+        block.update(&view);
+    }
 }
 
 #[system]
@@ -46,6 +64,7 @@ pub struct World {
     >>,
     chunk_loaders: Arc<Vec<Box<dyn ChunkLoader>>>,
     saver: Mutex<ChunkSaver>,
+    changed: Mutex<Vec<Vector3<i32>>>,
 }
 
 impl World {
@@ -54,6 +73,7 @@ impl World {
             chunks: Arc::new(RwLock::new(HashMap::new())),
             chunk_loaders: Arc::new(chunk_sources),
             saver: Mutex::new(ChunkSaver::new()),
+            changed: Mutex::new(vec![]),
         }
     }
 
@@ -67,7 +87,7 @@ impl World {
                 chunk.subscribe(id, callback);
             },
             None => {
-                let mut chunk = Chunk::new();
+                let chunk = Chunk::new();
                 chunk.subscribe(id, callback);
                 self.chunks.write().unwrap()
                     .insert(coords, chunk);
@@ -111,9 +131,15 @@ impl World {
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
         if let Some(chunk) = chunk {
+            self.changed.lock().unwrap()
+                .push(vector!(x, y, z));
             let (x, y, z) = coords.relative(x, y, z);
             chunk.set_block(x, y, z, block);
         }
+    }
+
+    pub fn get_view(&self, center: Vector3<i32>) -> WorldView {
+        WorldView::new(self, center)
     }
 
     pub fn save_all(&mut self) {

@@ -2,17 +2,15 @@ use std::collections::BTreeMap;
 
 use nalgebra::Vector3;
 
-use crate::chunks::World;
+use crate::chunks::WorldView;
 use crate::common::block::{Block, BlockFace};
-use super::BlockClass;
-use super::BlockType;
+use super::{can_place_plant_on, BlockClass, BlockType};
 
 impl BlockType {
-    pub fn place(&self, pos: (i32, i32, i32), world: &World, face: BlockFace, 
+    pub fn place(&self, view: &WorldView, face: BlockFace, 
         cursor: Vector3<f32>, angle: (f32, f32))
     {
-        let (x, y, z) = pos;
-        let replacing = world.get_block(x, y, z);
+        let replacing = view.get(0, 0, 0);
         if !replacing.material.replaceable {
             return;
         }
@@ -42,42 +40,42 @@ impl BlockType {
                 props.insert("half".into(), calc_half(&face, &cursor));
             },
             BlockClass::DoorBlock => {
-                if !world.get_block(x, y + 1, z).material.replaceable {
+                if !view.get(0, 1, 0).material.replaceable {
                     return;
                 }
                 props.insert("facing".into(), 
                 facing_from_angle(angle.0 + 180.0));
                 props.insert("half".into(), "upper".into());
                 let block = self.with_props(&props).unwrap();
-                world.set_block(x, y + 1, z, block);
+                view.set(0, 1, 0, block);
                 props.insert("half".into(), "lower".into());
             },
             BlockClass::TallFlowerBlock | BlockClass::TallPlantBlock => {
-                if !can_place_plant_on(world.get_block(x, y - 1, z)) {
+                if !can_place_plant_on(view.get(0, -1, 0)) {
                     return;
                 }
-                if !world.get_block(x, y + 1, z).material.replaceable {
+                if !view.get(0, 1, 0).material.replaceable {
                     return;
                 }
                 props.insert("half".into(), "upper".into());
                 let block = self.with_props(&props).unwrap();
-                world.set_block(x, y + 1, z, block);
+                view.set(0, 1, 0, block);
                 props.insert("half".into(), "lower".into());
             },
             BlockClass::FlowerBlock | BlockClass::FernBlock => {
-                if !can_place_plant_on(world.get_block(x, y - 1, z)) {
+                if !can_place_plant_on(view.get(0, -1, 0)) {
                     return;
                 }
             },
             BlockClass::CropBlock => {
-                if world.get_block(x, y - 1, z).btype.name != "minecraft:farmland" {
+                if view.get(0, -1, 0).btype.name != "minecraft:farmland" {
                     return;
                 }
             },
             _ => (),
         }
         let block = self.with_props(&props).unwrap();
-        world.set_block(x, y, z, block);
+        view.set(0, 0, 0, block);
     }
 
     fn auto_fill_props(&self, replacing: &Block, face: &BlockFace, 
@@ -136,9 +134,4 @@ fn calc_half(face: &BlockFace, cursor: &Vector3<f32>) -> String {
             "top" 
         }
     }.into()
-}
-
-fn can_place_plant_on(block: &Block) -> bool {
-    block.material.name == "minecraft:soil" || 
-    block.material.name == "minecraft:solid_organic"
 }

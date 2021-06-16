@@ -1,11 +1,10 @@
-mod placement;
-mod classes;
-
 use anyhow::{anyhow, Result};
 use std::collections::{BTreeMap, HashMap};
 
-pub use classes::BlockClass;
-use super::{Block, maps::{BLOCK_TYPES, NAME_TO_TYPE}};
+use super::{
+    Block, 
+    BlockClass,
+    maps::{BLOCK_TYPES, NAME_TO_TYPE}};
 
 pub struct BlockType {
     pub id: u16,

@@ -1,3 +1,4 @@
+use nalgebra::{Vector3, vector};
 use num_derive::FromPrimitive;
 
 #[derive(FromPrimitive)]
@@ -9,16 +10,16 @@ pub enum BlockFace {
 
 impl BlockFace {
     pub fn get_adjacent(&self, block: (i32, i32, i32)) 
-        -> (i32, i32, i32)
+        -> Vector3<i32>
     {
         let (x, y, z) = block;
         match self {
-            BlockFace::NegY => (x, y - 1, z),
-            BlockFace::PosY => (x, y + 1, z),
-            BlockFace::NegZ => (x, y, z - 1),
-            BlockFace::PosZ => (x, y, z + 1),
-            BlockFace::NegX => (x - 1, y, z),
-            BlockFace::PosX => (x + 1, y, z),
+            BlockFace::NegY => vector!(x, y - 1, z),
+            BlockFace::PosY => vector!(x, y + 1, z),
+            BlockFace::NegZ => vector!(x, y, z - 1),
+            BlockFace::PosZ => vector!(x, y, z + 1),
+            BlockFace::NegX => vector!(x - 1, y, z),
+            BlockFace::PosX => vector!(x + 1, y, z),
         }
     }
 }
