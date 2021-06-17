@@ -2,6 +2,7 @@ use legion::*;
 use nalgebra::vector;
 use crate::buckets::EntityTracker;
 use crate::buckets::events::{EntityEvent, EntityEventData};
+use crate::common::block::InteractionResult;
 use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};
@@ -69,12 +70,12 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
                 *rotation = Rotation(yaw, pitch);
             },
             ServerboundPacket::PlayerDigging {
-                status, position: (x, y, z), face
+                status, position, face
             } => {
                 match status {
                     0 => {
-                        let view = chunks.get_view(vector!(x, y, z));
-                        chunks.get_block(x, y, z).destroy(&view);
+                        let view = chunks.get_view(position);
+                        chunks.get_block(&position).destroy(&view);
                     },
                     2 => {
                         
@@ -97,16 +98,17 @@ pub fn receive_events(entity: &Entity, id: &EntityId, conn: &mut PlayerConnectio
             ServerboundPacket::PlayerBlockPlacement {
                 hand, location, face, cursor_position, ..
             } => {
-                if let Some(stack) = inventory.get_held() {
-                    if let Some(block_type) = stack.item.get_block() {
-                        let view = chunks.get_view(
-                            face.get_adjacent(location));
-                        block_type.place(
-                            &view,
-                            face,
-                            cursor_position, 
-                            (rotation.0, rotation.1));
-                    }
+                let view = chunks.get_view(location);
+                match chunks.get_block(&location).interact(&view) {
+                    InteractionResult::None => {
+                        if let Some(stack) = inventory.get_held() {
+                            if let Some(block_type) = stack.item.get_block() {
+                                block_type.place(&view, face, cursor_position, 
+                                    (rotation.0, rotation.1));
+                            }
+                        }
+                    },
+                    InteractionResult::PreventPlacing => (),
                 }
             },
             ServerboundPacket::Disconnect { reason } => {

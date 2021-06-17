@@ -16,7 +16,7 @@ pub fn update_chunk_view(id: &EntityId, pos: &Position, view: &mut ChunkViewer,
 {
     let changes = view.move_to(pos.0);
     if changes.changed_chunk {
-        let ChunkCoords(chunk_x, chunk_y) = ChunkCoords::from_pos(pos.0);
+        let ChunkCoords(chunk_x, chunk_y) = ChunkCoords::from_pos(&pos.0);
         conn.send(ClientboundPacket::UpdateViewPosition(chunk_x, chunk_y));
     }
     for coords in changes.added {
@@ -40,9 +40,9 @@ fn handle_chunk_event(sender: &UnboundedSender<ClientboundPacket>,
         ChunkEvent::ChunkLoaded { chunk } 
             => send_chunk(&sender, coords, chunk),
         ChunkEvent::BlockChanged { x, y, z, new } => {
-            let (x, y, z) = coords.global(x, y, z);
             sender.send(ClientboundPacket::BlockChange {
-                x, y, z, block_state: new.id as u32,
+                pos: coords.global(x, y, z),
+                block_state: new.id as u32,
             });
         },
     }
@@ -82,12 +82,12 @@ impl ChunkViewer {
     pub fn move_to(&mut self, new_pos: Vector3<f64>) -> ViewMoveResult {
         let changed_chunk = match self.last_pos {
             Some(last_pos) => {
-                ChunkCoords::from_pos(last_pos) != ChunkCoords::from_pos(new_pos)
+                ChunkCoords::from_pos(&last_pos) != ChunkCoords::from_pos(&new_pos)
             }
             None => true,
         };
         let new_view: HashSet<ChunkCoords> = 
-            ChunkCoords::near(new_pos, self.range)
+            ChunkCoords::near(&new_pos, self.range)
             .into_iter().collect();
         let added = new_view.difference(&self.in_view)
             .cloned().collect();

@@ -27,7 +27,7 @@ pub enum ServerboundPacket {
     },
     PlayerDigging {
         status: u8,
-        position: (i32, i32, i32),
+        position: Vector3<i32>,
         face: u8,
     },
     HeldItemChange {
@@ -39,7 +39,7 @@ pub enum ServerboundPacket {
     },
     PlayerBlockPlacement {
         hand: u8,
-        location: (i32, i32, i32),
+        location: Vector3<i32>,
         face: BlockFace,
         cursor_position: Vector3<f32>,
         inside_block: bool,

@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq, Eq)]
 pub enum BlockClass {
     AirBlock,
     AnvilBlock,

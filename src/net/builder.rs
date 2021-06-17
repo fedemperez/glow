@@ -1,4 +1,5 @@
 use anyhow::Result;
+use nalgebra::Vector3;
 use tokio::io::{AsyncWrite, AsyncWriteExt};
 use nbt::{Value, to_writer};
 use crate::serialization::push_varint;
@@ -46,11 +47,12 @@ impl PacketBuilder {
         self
     }
 
-    pub fn add_block_position(&mut self, x: i32, y: i32, z: i32)
+    pub fn add_block_position(&mut self, pos: &Vector3<i32>)
         -> &mut Self
     {
-        let pos = ((x as i64 & 0x3FFFFFF) << 38) | ((z as i64 & 0x3FFFFFF) << 12) | 
-            (y as i64 & 0xFFF);
+        let pos = ((pos.x as i64 & 0x3FFFFFF) << 38) | 
+            ((pos.z as i64 & 0x3FFFFFF) << 12) | 
+            (pos.y as i64 & 0xFFF);
         self.add_bytes(&pos.to_be_bytes());
         self
     }

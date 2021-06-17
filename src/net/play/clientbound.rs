@@ -1,3 +1,4 @@
+use nalgebra::Vector3;
 use nbt::Value as Nbt;
 use serde_json::Value as Json;
 use uuid::Uuid;
@@ -98,9 +99,7 @@ pub enum ClientboundPacket {
        pitch: f32,
     },
     BlockChange {
-        x: i32,
-        y: i32,
-        z: i32,
+        pos: Vector3<i32>,
         block_state: u32,
     },
     WindowItems {

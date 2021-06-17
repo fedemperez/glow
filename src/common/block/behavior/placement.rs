@@ -1,28 +1,37 @@
 use std::collections::BTreeMap;
 
-use nalgebra::Vector3;
+use nalgebra::{Vector3, vector};
 
 use crate::chunks::WorldView;
 use crate::common::block::{Block, BlockFace};
+use super::stairs::get_stair_shape;
 use super::{can_place_plant_on, BlockClass, BlockType};
 
 impl BlockType {
     pub fn place(&self, view: &WorldView, face: BlockFace, 
         cursor: Vector3<f32>, angle: (f32, f32))
     {
-        let replacing = view.get(0, 0, 0);
-        if !replacing.material.replaceable {
-            return;
+        let mut view = view.clone();
+        if !view.get(0, 0, 0).material.replaceable {
+            view.displace(face.get_direction());
+            if !view.get(0, 0, 0).material.replaceable {
+                return;
+            }
         }
-        let mut props = self.auto_fill_props(replacing, &face, cursor, angle);
+        let mut props = self.auto_fill_props(
+            view.get(0, 0, 0), &face, cursor, angle);
         match self.class {
             BlockClass::StairsBlock => {
-                props.insert("half".into(), calc_half(&face, &cursor));
+                props.insert("half".into(), 
+                    calc_half(&face, &cursor));
                 props.insert("facing".into(),
                     facing_from_angle(angle.0 + 180.0));
+                props.insert("shape".into(), 
+                    get_stair_shape(&props, &view));
             },
             BlockClass::EndRodBlock => {
-                props.insert("facing".into(), facing_from_face(&face));
+                props.insert("facing".into(), 
+                    facing_from_face(&face));
             },
             BlockClass::LadderBlock => {
                 match face {

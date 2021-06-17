@@ -9,17 +9,20 @@ pub enum BlockFace {
 }
 
 impl BlockFace {
-    pub fn get_adjacent(&self, block: (i32, i32, i32)) 
+    pub fn get_adjacent(&self, block: Vector3<i32>) 
         -> Vector3<i32>
     {
-        let (x, y, z) = block;
+        block + self.get_direction()
+    }
+
+    pub const fn get_direction(&self) -> Vector3<i32> {
         match self {
-            BlockFace::NegY => vector!(x, y - 1, z),
-            BlockFace::PosY => vector!(x, y + 1, z),
-            BlockFace::NegZ => vector!(x, y, z - 1),
-            BlockFace::PosZ => vector!(x, y, z + 1),
-            BlockFace::NegX => vector!(x - 1, y, z),
-            BlockFace::PosX => vector!(x + 1, y, z),
+            BlockFace::NegY => vector!(0, -1, 0),
+            BlockFace::PosY => vector!(0, 1, 0),
+            BlockFace::NegZ => vector!(0, 0, -1),
+            BlockFace::PosZ => vector!(0, 0, 1),
+            BlockFace::NegX => vector!(-1, 0, 0),
+            BlockFace::PosX => vector!(1, 0, 0),
         }
     }
 }

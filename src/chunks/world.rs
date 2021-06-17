@@ -33,7 +33,7 @@ fn update_changed(#[resource] world: &mut World) {
         .flatten();
     for pos in to_update {
         let view = world.get_view(pos);
-        let block = world.get_block(pos.x, pos.y, pos.z);
+        let block = world.get_block(&pos);
         block.update(&view);
     }
 }
@@ -114,26 +114,26 @@ impl World {
         }
     }
 
-    pub fn get_block(&self, x: i32, y: i32, z: i32) -> &'static Block {
-        let coords = ChunkCoords::from_block(x, z);
+    pub fn get_block(&self, pos: &Vector3<i32>) -> &'static Block {
+        let coords = ChunkCoords::from_block(pos);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
         if let Some(chunk) = chunk {
-            let (x, y, z) = coords.relative(x, y, z);
+            let (x, y, z) = coords.relative(pos);
             chunk.get_block(x, y, z)
         } else {
             Block::air()
         }
     }
 
-    pub fn set_block(&self, x: i32, y: i32, z: i32, block: &'static Block) {
-        let coords = ChunkCoords::from_block(x, z);
+    pub fn set_block(&self, pos: &Vector3<i32>, block: &'static Block) {
+        let coords = ChunkCoords::from_block(pos);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
         if let Some(chunk) = chunk {
             self.changed.lock().unwrap()
-                .push(vector!(x, y, z));
-            let (x, y, z) = coords.relative(x, y, z);
+                .push(pos.clone());
+            let (x, y, z) = coords.relative(pos);
             chunk.set_block(x, y, z, block);
         }
     }

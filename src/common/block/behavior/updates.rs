@@ -1,10 +1,19 @@
 use crate::chunks::WorldView;
 use block_macro::block_id;
-use super::{can_place_plant_on, Block, BlockClass};
+use super::{Block, BlockClass, can_place_plant_on, stairs::get_stair_shape};
 
 impl Block {
     pub fn update(&'static self, view: &WorldView) {
         match self.btype.class {
+            BlockClass::StairsBlock => {
+                let shape = get_stair_shape(&self.props, view);
+                if shape != self.props["shape"] {
+                    let mut props = self.props.clone();
+                    props.insert("shape".into(), shape);
+                    let block = self.btype.with_props(&props).unwrap();
+                    view.set(0, 0, 0, block);
+                }
+            },
             BlockClass::DoorBlock => {
                 double_block_update(self, view);
             },

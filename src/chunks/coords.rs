@@ -7,16 +7,15 @@ use num_traits::Pow;
 pub struct ChunkCoords(pub i32, pub i32);
 
 impl ChunkCoords {
-    pub fn from_pos(pos: Vector3<f64>) -> Self {
-        let (x, _, z) = block_coords(pos);
-        Self::from_block(x, z)
+    pub fn from_pos(pos: &Vector3<f64>) -> Self {
+        Self::from_block(&block_coords(pos))
     }
     
-    pub fn from_block(x: i32, z: i32) -> Self {
-        Self(x.div_floor(&(CHUNK_WIDTH as i32)), z.div_floor(&(CHUNK_WIDTH as i32)))
+    pub fn from_block(pos: &Vector3<i32>) -> Self {
+        Self(pos.x.div_floor(&(CHUNK_WIDTH as i32)), pos.z.div_floor(&(CHUNK_WIDTH as i32)))
     }
 
-    pub fn near(pos: Vector3<f64>, chunk_distance: i32) -> Vec<Self> {
+    pub fn near(pos: &Vector3<f64>, chunk_distance: i32) -> Vec<Self> {
         let center = Self::from_pos(pos);
         let mut pos = pos / (CHUNK_WIDTH as f64);
         pos.y = 0.0;
@@ -37,23 +36,23 @@ impl ChunkCoords {
         result
     }
 
-    pub fn relative(&self, x: i32, y: i32, z: i32)
+    pub fn relative(&self, delta: &Vector3<i32>)
         -> (usize, usize, usize)
     {
-        let x = x - self.0 * 16;
-        let z = z - self.1 * 16;
-        (x as usize, y as usize, z as usize)
+        let x = delta.x - self.0 * 16;
+        let z = delta.z - self.1 * 16;
+        (x as usize, delta.y as usize, z as usize)
     }
 
     pub fn global(&self, x: usize, y: usize, z: usize) 
-        -> (i32, i32, i32) 
+        -> Vector3<i32>
     {
         let x = x as i32 + self.0 * 16;
         let z = z as i32 + self.1 * 16;
-        (x, y as i32, z)
+        vector!(x, y as i32, z)
     }
 }
 
-pub fn block_coords(pos: Vector3<f64>) -> (i32, i32, i32) {
-    (pos.x.floor() as i32, pos.y.floor() as i32, pos.z.floor() as i32)
+pub fn block_coords(pos: &Vector3<f64>) -> Vector3<i32> {
+    vector!(pos.x.floor() as i32, pos.y.floor() as i32, pos.z.floor() as i32)
 }

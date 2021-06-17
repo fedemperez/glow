@@ -12,6 +12,7 @@ use material::BlockMaterial;
 
 pub use face::BlockFace;
 pub use types::BlockType;
+pub use behavior::InteractionResult;
 use classes::BlockClass;
 
 pub struct Block {
