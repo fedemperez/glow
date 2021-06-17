@@ -16,10 +16,11 @@ pub use handlers::InteractionResult;
 use classes::BlockClass;
 
 pub struct Block {
+    pub id: u16,
     pub btype: &'static BlockType,
     pub props: BTreeMap<String, String>,
     pub material: &'static BlockMaterial,
-    pub id: u16,
+    pub opaque: bool,
 }
 
 impl Block {

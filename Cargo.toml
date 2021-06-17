@@ -28,3 +28,5 @@ num-derive = "0.3"
 anvil-region = "0.8"
 anvil-nbt = { version = "0.3.0", package = "named-binary-tag" }
 ctrlc = "3.1.9"
+rayon = "1.5.1"
+rand = "0.8.4"

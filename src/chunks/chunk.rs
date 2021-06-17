@@ -1,6 +1,7 @@
 use crate::blocks::Block;
 use super::ChunkCoords;
 use super::ChunkData;
+use super::WorldView;
 use super::events::ChunkEvent;
 use super::saving::ChunkSaver;
 use std::collections::HashMap;
@@ -8,6 +9,8 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::time::Duration;
 use std::time::Instant;
+use nalgebra::{Vector3, vector};
+use rand::{Rng, thread_rng};
 
 #[derive(Clone)]
 pub struct Chunk {
@@ -75,6 +78,34 @@ impl Chunk {
         match *unobserved_since {
             Some(time) => Instant::now() - time,
             None => Duration::from_secs(0),
+        }
+    }
+
+    pub fn random_tick(&self, view: &WorldView) {
+        let mut rng = thread_rng();
+        let bitmask = self.data.as_ref().map(|data| 
+            data.read().unwrap()
+            .get_sections_bitmask());
+        if let Some(mut bitmask) = bitmask {
+            for section in 0..16 {
+                if bitmask & 1 == 1 {
+                    for _tick in 0..3 {
+                        let y_delta = section * 16;
+                        let x = rng.gen_range(0..16);
+                        let y = rng.gen_range(0..16);
+                        let z = rng.gen_range(0..16);
+                        let coords = vector!(x, y + y_delta, z);
+                        let mut view = view.clone();
+                        view.displace(coords);
+                        self.get_block(
+                            x as usize, 
+                            (y + y_delta) as usize, 
+                            z as usize
+                        ).random_tick(&view);
+                    }
+                }
+                bitmask >>= 1;
+            }
         }
     }
 

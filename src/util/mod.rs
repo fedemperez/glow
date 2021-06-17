@@ -37,3 +37,14 @@ pub fn cardinal_to_vec(dir: &str) -> Vector3<i32> {
         _east => vector!(1, 0, 0),
     }
 }
+
+const ADJACENT_DELTAS: [Vector3<i32>; 6] = [
+    vector!(-1, 0, 0), vector!(0, -1, 0), vector!(0, 0, -1),
+    vector!(1, 0, 0), vector!(0, 1, 0), vector!(0, 0, 1),
+];
+
+pub fn adjacent_coords(center: &Vector3<i32>) -> Vec<Vector3<i32>> {
+    ADJACENT_DELTAS.iter()
+        .map(|delta| center + delta)
+        .collect()
+}

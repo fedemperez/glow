@@ -57,9 +57,10 @@ lazy_static! {
                 btype.states.into_iter()
                 .map(move |(id, state)| Block {
                     id,
-                    material: MATERIALS.get(&state.material).unwrap(),
-                    props: state.into_props(),
                     btype: NAME_TO_TYPE[&name],
+                    material: MATERIALS.get(&state.material).unwrap(),
+                    opaque: state.is_opaque,
+                    props: state.into_props(),
                 })
                 .collect::<Vec<Block>>()
             )
@@ -82,9 +83,13 @@ pub struct BlockTypeJson {
 #[derive(Clone, Deserialize)]
 pub struct BlockStateJson {
     material: String,
+    #[serde(default="true_")]
+    is_opaque: bool,
     #[serde(default)]
     properties: BTreeMap<String, Value>,
 }
+
+const fn true_() -> bool { true }
 
 impl BlockStateJson {
     fn into_props(self) -> BTreeMap<String, String> {

@@ -1,7 +1,7 @@
 use crate::blocks::Block;
 use super::WorldView;
 use super::ChunkData;
-use super::view::adjacent_coords;
+use crate::util::adjacent_coords;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
 use super::events::ChunkEvent;
@@ -9,12 +9,14 @@ use super::saving::ChunkSaver;
 use legion::system;
 use legion::systems::Builder;
 use nalgebra::Vector3;
+use nalgebra::vector;
 use std::mem::take;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::collections::HashMap;
 use super::loading::ChunkLoader;
 use std::sync::{Arc, RwLock};
+use rayon::prelude::*;
 
 const CHUNK_UNLOAD_TIME: Duration = Duration::from_secs(10);
 const MAX_UNLOADS_PER_TICK: usize = 2;
@@ -22,6 +24,7 @@ const MAX_UNLOADS_PER_TICK: usize = 2;
 pub fn register(schedule: &mut Builder) {
     schedule.add_system(update_changed_system());
     schedule.add_thread_local(unload_chunks_system());
+    schedule.add_thread_local(random_tick_system());
 }
 
 #[system]
@@ -36,6 +39,17 @@ fn update_changed(#[resource] world: &mut World) {
         let block = world.get_block(&pos);
         block.update(&view);
     }
+}
+
+#[system]
+fn random_tick(#[resource] world: &mut World) {
+    let chunks = world.chunks.read().unwrap();
+    chunks.par_iter()
+        .for_each(|(coords, chunk)| {
+            let center = coords.global(0, 0, 0);
+            let view = WorldView::new(world, center);
+            chunk.random_tick(&view);
+        });
 }
 
 #[system]
