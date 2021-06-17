@@ -3,7 +3,7 @@ mod maps;
 mod types;
 mod classes;
 mod material;
-mod behavior;
+mod handlers;
 
 use std::collections::BTreeMap;
 
@@ -12,7 +12,7 @@ use material::BlockMaterial;
 
 pub use face::BlockFace;
 pub use types::BlockType;
-pub use behavior::InteractionResult;
+pub use handlers::InteractionResult;
 use classes::BlockClass;
 
 pub struct Block {

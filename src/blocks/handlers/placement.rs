@@ -3,8 +3,9 @@ use std::collections::BTreeMap;
 use nalgebra::Vector3;
 
 use crate::chunks::WorldView;
-use super::stairs::get_stair_shape;
-use super::can_place_plant_on;
+use super::behavior::{
+    stairs::get_stair_shape,
+    plants::can_survive_on};
 use crate::blocks::{BlockFace, Block, BlockType, BlockClass};
 
 impl BlockType {
@@ -60,7 +61,7 @@ impl BlockType {
                 props.insert("half".into(), "lower".into());
             },
             BlockClass::TallFlowerBlock | BlockClass::TallPlantBlock => {
-                if !can_place_plant_on(view.get(0, -1, 0)) {
+                if !can_survive_on(view.get(0, -1, 0)) {
                     return;
                 }
                 if !view.get(0, 1, 0).material.replaceable {
@@ -72,7 +73,7 @@ impl BlockType {
                 props.insert("half".into(), "lower".into());
             },
             BlockClass::FlowerBlock | BlockClass::FernBlock => {
-                if !can_place_plant_on(view.get(0, -1, 0)) {
+                if !can_survive_on(view.get(0, -1, 0)) {
                     return;
                 }
             },

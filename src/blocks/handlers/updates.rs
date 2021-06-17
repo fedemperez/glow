@@ -1,6 +1,8 @@
 use crate::chunks::WorldView;
 use crate::blocks::{Block, BlockClass};
-use super::{can_place_plant_on, stairs::get_stair_shape};
+use super::behavior::{
+    plants::can_survive_on, 
+    stairs::get_stair_shape};
 
 impl Block {
     pub fn update(&'static self, view: &WorldView) {
@@ -54,7 +56,7 @@ fn tall_plant_update(block: &'static Block, view: &WorldView) {
 
 fn plant_root_update(block: &'static Block, view: &WorldView) {
     let below = view.get(0, -1, 0);
-    if !can_place_plant_on(below) {
+    if !can_survive_on(below) {
         view.set(0, 0, 0, Block::air());
     }
 }
