@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use super::{Inventory, ItemStack, SlotIndex};
-use crate::common::item_stack::ItemType;
+use crate::items::ItemType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all="PascalCase")] 

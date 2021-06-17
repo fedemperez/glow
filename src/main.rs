@@ -6,7 +6,7 @@ mod util;
 mod entities;
 mod buckets;
 mod inventory;
-mod common;
+mod items;
 mod serialization;
 mod tags;
 mod blocks;

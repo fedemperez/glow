@@ -1,6 +1,6 @@
 mod serialization;
 
-use crate::common::item_stack::ItemStack;
+use crate::items::ItemStack;
 use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serialization::ItemStackPlayerData;

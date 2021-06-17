@@ -1,8 +1,5 @@
 use nalgebra::Vector3;
-use nbt::Value as Nbt;
-use crate::common::{
-    item_stack::ItemStack,
-};
+use crate::items::ItemStack;
 use crate::blocks::BlockFace;
 
 pub enum ServerboundPacket {

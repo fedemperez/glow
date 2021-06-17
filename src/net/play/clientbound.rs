@@ -3,7 +3,7 @@ use nbt::Value as Nbt;
 use serde_json::Value as Json;
 use uuid::Uuid;
 
-use crate::common::item_stack::ItemStack;
+use crate::items::ItemStack;
 
 #[derive(Clone)]
 pub struct PlayerInfo {

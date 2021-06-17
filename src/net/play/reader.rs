@@ -3,7 +3,7 @@ use std::io::Cursor;
 use nalgebra::vector;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use anyhow::{Result, anyhow};
-use crate::common::item_stack::{ItemStack, ItemType};
+use crate::items::{ItemStack, ItemType};
 use num_traits::FromPrimitive;
 
 use super::errors::UnknownPacket;
