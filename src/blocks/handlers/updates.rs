@@ -35,7 +35,7 @@ impl Block {
             BlockClass::SugarCaneBlock | BlockClass::BambooBlock => {
                 tall_plant_update(self, view);
             },
-            BlockClass::FenceBlock => {
+            BlockClass::FenceBlock | BlockClass::PaneBlock => {
                 let mut props = self.props.clone();
                 update_connections(&mut props, &view, 
                     "true", "false");
