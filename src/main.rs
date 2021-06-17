@@ -22,6 +22,7 @@ use legion::*;
 use net::Server;
 use tokio::time::sleep;
 
+const PRINT_TIMING: bool = false;
 const TICK_INTERVAL: Duration = Duration::from_millis(1000 / 20);
 static STOP_SIGNAL: AtomicBool = AtomicBool::new(false);
 
@@ -42,14 +43,17 @@ async fn main() -> Result<()> {
     ctrlc::set_handler(|| {
         STOP_SIGNAL.store(true, Ordering::Relaxed)
     }).expect("Error setting ctrl + c handler");
+    let mut last_msg = Instant::now();
     loop {
         let start = Instant::now();
         schedule.execute(&mut world, &mut resources);
+        if PRINT_TIMING && last_msg.elapsed() > Duration::from_secs(2) {
+            println!("Last update took {} micros", 
+                start.elapsed().as_micros());
+            last_msg = Instant::now();
+        }
         if start.elapsed() < TICK_INTERVAL {
             sleep(TICK_INTERVAL - start.elapsed()).await;
-        } else {
-            println!("The server is lagging :(, last update took {}ms", 
-                start.elapsed().as_millis());
         }
         if STOP_SIGNAL.load(Ordering::Relaxed) {
             println!("\nStopping...");
