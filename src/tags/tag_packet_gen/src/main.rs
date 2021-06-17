@@ -26,15 +26,31 @@ fn get_tags_from_dir(dir: &str, id_map: &HashMap<String, u32>) -> Vec<Tag> {
 }
 
 fn file_to_tag(path: DirEntry, id_map: &HashMap<String, u32>) -> Tag {
-    let name = path.file_name().into_string().unwrap().replace(".json", "");
-    let file = File::open(path.path()).unwrap();
-    let json: TagJson = serde_json::from_reader(file).unwrap();
-    let entries = json.values.into_iter()
-        .filter_map(|value| id_map.get(&value).cloned())
-        .collect();
     Tag {
-        name, entries,
+        name: path.file_name().into_string().unwrap()
+            .replace(".json", ""), 
+        entries: read_entries(path.path(), id_map),
     }
+}
+
+fn read_entries(path: impl AsRef<Path>, id_map: &HashMap<String, u32>) 
+    -> Vec<u32> 
+{
+    let file = File::open(path.as_ref()).unwrap();
+    let json: TagJson = serde_json::from_reader(file).unwrap();
+    let mut result = vec![];
+    for value in json.values {
+        if let Some(value) = id_map.get(&value).cloned() {
+            result.push(value);
+        } else {
+            let name = value.replace("#minecraft:", "");
+            let dir = path.as_ref().parent().unwrap();
+            let path = dir.join(format!("{}.json", name));
+            let other_tag = read_entries(path, id_map);
+            result.extend(other_tag);
+        }
+    }
+    result
 }
 
 fn write_tags<W>(tags: Vec<Tag>, dest: &mut W) where W: Write {

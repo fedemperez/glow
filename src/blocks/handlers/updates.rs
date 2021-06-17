@@ -1,8 +1,12 @@
+use nalgebra::vector;
+
 use crate::chunks::WorldView;
-use crate::blocks::{Block, BlockClass};
+use crate::blocks::{Block, BlockClass, BlockType};
+use crate::util::cardinal_to_vec;
 use super::behavior::{
     plants::can_survive_on, 
-    stairs::get_stair_shape};
+    stairs::get_stair_shape,
+    connections::update_connections};
 
 impl Block {
     pub fn update(&'static self, view: &WorldView) {
@@ -30,6 +34,15 @@ impl Block {
             },
             BlockClass::SugarCaneBlock | BlockClass::BambooBlock => {
                 tall_plant_update(self, view);
+            },
+            BlockClass::FenceBlock => {
+                let mut props = self.props.clone();
+                update_connections(&mut props, &view, 
+                    "true", "false");
+                if props != self.props {
+                    let new = self.btype.with_props(&props).unwrap();
+                    view.set(0, 0, 0, new);
+                }
             },
             _ => (),
         }

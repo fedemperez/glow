@@ -32,10 +32,11 @@ async fn main() -> Result<()> {
     let mut resources = Resources::default();
     resources.insert(server);
     let mut schedule = Schedule::builder();
+    players::register_early(&mut schedule, &mut resources);
     chunks::register(&mut schedule, &mut resources);
-    players::register(&mut schedule, &mut resources);
     entities::register(&mut schedule, &mut resources);
     buckets::register(&mut schedule, &mut resources);
+    players::register_late(&mut schedule, &mut resources);
     let mut schedule = schedule.build();
     let mut world = World::default();
     ctrlc::set_handler(|| {

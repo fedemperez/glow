@@ -4,8 +4,9 @@ use nalgebra::Vector3;
 
 use crate::chunks::WorldView;
 use super::behavior::{
-    stairs::get_stair_shape,
-    plants::can_survive_on};
+    connections::update_connections, 
+    plants::can_survive_on, 
+    stairs::get_stair_shape};
 use crate::blocks::{BlockFace, Block, BlockType, BlockClass};
 
 impl BlockType {
@@ -81,6 +82,10 @@ impl BlockType {
                 if view.get(0, -1, 0).btype.name != "minecraft:farmland" {
                     return;
                 }
+            },
+            BlockClass::FenceBlock => {
+                update_connections(&mut props, &view, 
+                    "true", "false");
             },
             _ => (),
         }

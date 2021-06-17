@@ -32,19 +32,23 @@ fn keepalive(conn: &PlayerConnection) {
     conn.send(ClientboundPacket::KeepAlive(get_time_millis()));
 }
 
-pub fn register(schedule: &mut Builder, resources: &mut Resources) {
+pub fn register_early(schedule: &mut Builder, resources: &mut Resources) {
     schedule
-        .add_system(update_player_list_system())
         .add_system(receive_events_system())
+        .add_system(update_player_list_system());
+    resources.insert(PlayerList::new());
+    resources.insert(JoiningPlayerQueue::new());
+    resources.insert(DisconnectionQueue::new());
+}
+
+pub fn register_late(schedule: &mut Builder, resources: &mut Resources) {
+    schedule
         .add_system(keepalive_system())
         .add_system(send_entity_events_system())
         .add_thread_local(update_chunk_view_system())
         .add_system(join_players_system())
         .add_thread_local(load_player_data_system())
         .add_thread_local(handle_disconnections_system());
-    resources.insert(PlayerList::new());
-    resources.insert(JoiningPlayerQueue::new());
-    resources.insert(DisconnectionQueue::new());
 }
 
 pub async fn on_stop(world: &mut World, resources: &mut Resources) {

@@ -1,6 +1,7 @@
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
+use nalgebra::{Vector3, vector};
 use tokio::io::AsyncWriteExt;
 use tokio::{fs::File, io::AsyncReadExt};
 
@@ -26,4 +27,13 @@ pub async fn write_file(path: impl AsRef<Path>, data: &[u8])
     let mut file = File::create(path).await?;
     file.write_all(data).await?;
     Ok(())
+}
+
+pub fn cardinal_to_vec(dir: &str) -> Vector3<i32> {
+    match dir {
+        "south" => vector!(0, 0, 1),
+        "west" => vector!(-1, 0, 0),
+        "north" => vector!(0, 0, -1),
+        _east => vector!(1, 0, 0),
+    }
 }
