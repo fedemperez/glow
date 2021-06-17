@@ -83,7 +83,9 @@ impl BlockType {
                     return;
                 }
             },
-            BlockClass::FenceBlock | BlockClass::PaneBlock => {
+            BlockClass::FenceBlock | BlockClass::PaneBlock |
+                BlockClass::StainedGlassPaneBlock
+            => {
                 update_connections(&mut props, &view, 
                     "true", "false");
             },
