@@ -1,11 +1,11 @@
 use std::collections::BTreeMap;
 
-use nalgebra::{Vector3, vector};
+use nalgebra::Vector3;
 
 use crate::chunks::WorldView;
-use crate::common::block::{Block, BlockFace};
 use super::stairs::get_stair_shape;
-use super::{can_place_plant_on, BlockClass, BlockType};
+use super::can_place_plant_on;
+use crate::blocks::{BlockFace, Block, BlockType, BlockClass};
 
 impl BlockType {
     pub fn place(&self, view: &WorldView, face: BlockFace, 

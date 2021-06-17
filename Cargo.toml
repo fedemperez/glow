@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-block_macro = { path = "./src/common/block/block_macro" }
+block_macro = { path = "./src/blocks/block_macro" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 thiserror = "1.0.24"

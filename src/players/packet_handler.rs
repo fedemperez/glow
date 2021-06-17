@@ -2,7 +2,7 @@ use legion::*;
 use nalgebra::vector;
 use crate::buckets::EntityTracker;
 use crate::buckets::events::{EntityEvent, EntityEventData};
-use crate::common::block::InteractionResult;
+use crate::blocks::InteractionResult;
 use crate::entities::EntityId;
 use crate::net::PlayerConnection;
 use crate::entities::{Position, Rotation};

@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use super::ChunkData;
-use crate::common::block::Block;
+use crate::blocks::Block;
 
 #[derive(Clone)]
 pub enum ChunkEvent {

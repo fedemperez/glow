@@ -2,8 +2,8 @@ use nalgebra::Vector3;
 use nbt::Value as Nbt;
 use crate::common::{
     item_stack::ItemStack,
-    block::BlockFace,
 };
+use crate::blocks::BlockFace;
 
 pub enum ServerboundPacket {
     PlayerPosition {

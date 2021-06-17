@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use lazy_static::lazy_static;
 
-use crate::common::block::BlockType;
+use crate::blocks::BlockType;
 
 const ITEMS_JSON: &str = include_str!("items.json");
 

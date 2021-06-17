@@ -1,5 +1,5 @@
 use crate::chunks::WorldView;
-use super::{Block, BlockClass};
+use crate::blocks::{Block, BlockClass};
 
 impl Block {
     pub fn interact(&self, view: &WorldView) -> InteractionResult {

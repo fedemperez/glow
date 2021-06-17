@@ -1,4 +1,4 @@
-use crate::common::block::Block;
+use crate::blocks::Block;
 use nalgebra::{Vector3, vector};
 
 use super::World;

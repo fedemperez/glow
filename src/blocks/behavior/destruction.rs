@@ -1,6 +1,7 @@
 use block_macro::block_id;
 
-use crate::{chunks::WorldView, common::block::Block};
+use crate::chunks::WorldView;
+use crate::blocks::Block;
 
 impl Block {
     pub fn destroy(&self, view: &WorldView) {

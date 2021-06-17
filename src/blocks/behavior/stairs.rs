@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use nalgebra::{Vector3, vector};
 
 use crate::chunks::WorldView;
-use super::{Block, BlockClass};
+use crate::blocks::{Block, BlockClass};
 
 pub fn get_stair_shape(props: &BTreeMap<String, String>, view: &WorldView)
     -> String

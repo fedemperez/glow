@@ -1,6 +1,6 @@
 use crate::chunks::WorldView;
 
-use super::Block;
+use crate::blocks::Block;
 
 impl Block {
     pub fn random_tick(&self, view: &WorldView) {

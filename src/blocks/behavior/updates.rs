@@ -1,6 +1,6 @@
 use crate::chunks::WorldView;
-use block_macro::block_id;
-use super::{Block, BlockClass, can_place_plant_on, stairs::get_stair_shape};
+use crate::blocks::{Block, BlockClass};
+use super::{can_place_plant_on, stairs::get_stair_shape};
 
 impl Block {
     pub fn update(&'static self, view: &WorldView) {

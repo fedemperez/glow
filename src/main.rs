@@ -9,6 +9,7 @@ mod inventory;
 mod common;
 mod serialization;
 mod tags;
+mod blocks;
 
 use std::{
     sync::atomic::{AtomicBool, Ordering}, 

@@ -1,6 +1,4 @@
-use block_macro::block_id;
-
-use crate::common::block::Block;
+use crate::blocks::Block;
 use super::ChunkCoords;
 use super::ChunkData;
 use super::events::ChunkEvent;

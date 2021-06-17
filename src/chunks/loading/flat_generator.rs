@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use block_macro::block_id;
 use super::ChunkLoader;
 use super::{ChunkData, ChunkCoords};
-use crate::common::block::Block;
+use crate::blocks::Block;
 
 pub struct FlatGenerator;
 

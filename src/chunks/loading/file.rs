@@ -8,7 +8,7 @@ use anvil_region::provider::RegionProvider;
 use async_trait::async_trait;
 use anvil_region::provider::FolderRegionProvider;
 use tokio::task;
-use crate::common::block::{Block, BlockType};
+use crate::blocks::{Block, BlockType};
 
 use crate::chunks::{
     ChunkData, ChunkCoords,

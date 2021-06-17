@@ -1,4 +1,4 @@
-use crate::common::block::Block;
+use crate::blocks::Block;
 use super::WorldView;
 use super::ChunkData;
 use super::view::adjacent_coords;
@@ -8,7 +8,7 @@ use super::events::ChunkEvent;
 use super::saving::ChunkSaver;
 use legion::system;
 use legion::systems::Builder;
-use nalgebra::{vector, Vector3};
+use nalgebra::Vector3;
 use std::mem::take;
 use std::sync::Mutex;
 use std::time::Duration;

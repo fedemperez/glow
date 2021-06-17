@@ -6,9 +6,7 @@ use anvil_region::{
     provider::{FolderRegionProvider, RegionProvider},
     error::ChunkWriteError};
 
-use block_macro::block_id;
-
-use crate::common::block::Block;
+use crate::blocks::Block;
 use crate::chunks::ChunkCoords;
 
 use super::{

@@ -1,7 +1,6 @@
 use anvil_nbt::CompoundTag;
-use block_macro::block_id;
 
-use crate::common::block::Block;
+use crate::blocks::Block;
 use crate::serialization::{CompactLong, push_varint};
 
 use super::palette::Palette;

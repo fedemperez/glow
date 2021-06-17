@@ -1,7 +1,6 @@
 use std::collections::HashMap;
-use block_macro::block_id;
 
-use crate::common::block::Block;
+use crate::blocks::Block;
 
 const MIN_BITS: u8 = 4;
 
