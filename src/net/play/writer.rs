@@ -1,5 +1,5 @@
 use anyhow::Result;
-use tokio::io::AsyncWrite;
+use tokio::io::{AsyncWrite, AsyncWriteExt};
 
 use super::clientbound::ClientboundPacket;
 use super::super::builder::PacketBuilder;
@@ -8,7 +8,7 @@ impl ClientboundPacket {
     pub async fn send<W>(&self, writer: &mut W) -> Result<()>
         where W: AsyncWrite + Unpin
     {
-        match self {
+        let bytes = match self {
             Self::JoinGame { 
                 entity_id, gamemode, world_names, dimension_codec, dimension, 
                 current_world, view_distance,
@@ -32,13 +32,13 @@ impl ClientboundPacket {
                     .add_bytes(&[1]) // Show the "You died" screen instead of respawning immediately
                     .add_bytes(&[0]) // Is debug world
                     .add_bytes(&[0]) // Is superflat world
-                    .write(writer).await
+                    .build()
             }
             Self::PluginMessage { channel, content } => {
                 PacketBuilder::new(0x17)
                     .add_str(channel.as_str())
                     .add_str(content.as_str())
-                    .write(writer).await
+                    .build()
             }
             Self::ChunkData
                 { x, z, full, bitmask, heightmap, biomes, data, block_entities } => 
@@ -63,12 +63,39 @@ impl ClientboundPacket {
                 for entity in block_entities {
                     packet.add_nbt(entity);
                 }
-                packet.write(writer).await
+                packet.build()
             }
+            Self::UpdateLight{ 
+                x, z, trust_edges, sky_mask, block_mask, 
+                empty_sky_mask, empty_block_mask, sky_light, block_light,
+            } => {
+                let mut pack = PacketBuilder::new(0x23);
+                pack
+                    .add_varint(*x as u32)
+                    .add_varint(*z as u32)
+                    .add_bytes(&[*trust_edges as u8])
+                    .add_varint(*sky_mask)
+                    .add_varint(*block_mask)
+                    .add_varint(*empty_sky_mask)
+                    .add_varint(*empty_block_mask);
+                for array in sky_light {
+                    pack.add_varint(array.len() as u32);
+                    for value in array {
+                        pack.add_bytes(&value.to_be_bytes());
+                    }
+                }
+                for array in block_light {
+                    pack.add_varint(array.len() as u32);
+                    for value in array {
+                        pack.add_bytes(&value.to_be_bytes());
+                    }
+                }
+                pack.build()
+            },
             Self::KeepAlive(id) => {
                 PacketBuilder::new(0x1F)
                     .add_bytes(&id.to_be_bytes())
-                    .write(writer).await
+                    .build()
             }
             Self::PlayerPosition(x, y, z) => {
                 PacketBuilder::new(0x34)
@@ -79,13 +106,13 @@ impl ClientboundPacket {
                     .add_bytes(&0f32.to_be_bytes()) // Pitch
                     .add_bytes(&[0b11000]) // Rotation relative, position absolute
                     .add_varint(0) // Teleport ID, used by client to confirm
-                    .write(writer).await
+                    .build()
             }
             Self::UpdateViewPosition(x, z) => {
                 PacketBuilder::new(0x40)
                     .add_varint(*x as u32)
                     .add_varint(*z as u32)
-                    .write(writer).await
+                    .build()
             }
             Self::PlayerInfoAddPlayers(players) => {
                 let mut packet = PacketBuilder::new(0x32);
@@ -120,7 +147,7 @@ impl ClientboundPacket {
                         None => { packet.add_bytes(&[0]); }
                     }
                 }
-                packet.write(writer).await
+                packet.build()
             }
             Self::PlayerInfoUpdateGamemode(updates) => {
                 unimplemented!()
@@ -135,7 +162,7 @@ impl ClientboundPacket {
                 for uuid in players {
                     packet.add_bytes(uuid.as_bytes());
                 }
-                packet.write(writer).await
+                packet.build()
             }
             Self::EntityTeleport{ id, x, y , z, yaw, pitch, on_ground } => {
                 PacketBuilder::new(0x56)
@@ -146,7 +173,7 @@ impl ClientboundPacket {
                     .add_angle(*yaw)
                     .add_angle(*pitch)
                     .add_bytes(&[*on_ground as u8])
-                    .write(writer).await
+                    .build()
             }
             Self::EntityPosition{ id, delta_x, delta_y, delta_z, on_ground } => {
                 PacketBuilder::new(0x27)
@@ -155,7 +182,7 @@ impl ClientboundPacket {
                     .add_position_delta(*delta_y)
                     .add_position_delta(*delta_z)
                     .add_bytes(&[*on_ground as u8])
-                    .write(writer).await
+                    .build()
             }
             Self::EntityPositionAndRotation { 
                 id, delta_x, delta_y, delta_z, yaw, pitch, on_ground
@@ -168,7 +195,7 @@ impl ClientboundPacket {
                     .add_angle(*yaw)
                     .add_angle(*pitch)
                     .add_bytes(&[*on_ground as u8])
-                    .write(writer).await
+                    .build()
             }
             Self::EntityRotation{ id, yaw, pitch, on_ground } => {
                 PacketBuilder::new(0x29)
@@ -176,13 +203,13 @@ impl ClientboundPacket {
                     .add_angle(*yaw)
                     .add_angle(*pitch)
                     .add_bytes(&[*on_ground as u8])
-                    .write(writer).await
+                    .build()
             }
             Self::EntityHeadLook{ id, yaw } => {
                 PacketBuilder::new(0x3A)
                     .add_varint(*id)
                     .add_angle(*yaw)
-                    .write(writer).await
+                    .build()
             }
             Self::DestroyEntities(entities) => {
                 let mut packet = PacketBuilder::new(0x36);
@@ -190,7 +217,7 @@ impl ClientboundPacket {
                 for entity in entities {
                     packet.add_varint(*entity);
                 }
-                packet.write(writer).await
+                packet.build()
             }
             Self::SpawnPlayer{ entity_id, uuid, x, y, z, yaw, pitch } => {
                 PacketBuilder::new(0x04)
@@ -201,13 +228,13 @@ impl ClientboundPacket {
                     .add_bytes(&z.to_be_bytes())
                     .add_angle(*yaw)
                     .add_angle(*pitch)
-                    .write(writer).await
+                    .build()
             }
             Self::BlockChange{ pos, block_state } => {
                 PacketBuilder::new(0x0B)
                     .add_block_position(pos)
                     .add_varint(*block_state)
-                    .write(writer).await
+                    .build()
             }
             Self::WindowItems{ window, items } => {
                 let mut pack = PacketBuilder::new(0x13);
@@ -221,24 +248,26 @@ impl ClientboundPacket {
                         pack.add_bytes(&[0]);
                     }
                 }
-                pack.write(writer).await
+                pack.build()
             }
             Self::UnloadChunk(x, z) => {
                 PacketBuilder::new(0x1C)
                     .add_bytes(&x.to_be_bytes())
                     .add_bytes(&z.to_be_bytes())
-                    .write(writer).await
+                    .build()
             }
             Self::Disconnect{ reason } => {
                 PacketBuilder::new(0x19)
                     .add_str(&reason.to_string())
-                    .write(writer).await
+                    .build()
             }
             Self::Tags{ raw } => {
                 PacketBuilder::new(0x5B)
                     .add_bytes(raw)
-                    .write(writer).await
+                    .build()
             }
-        }
+        };
+        writer.write_all(&bytes).await?;
+        Ok(())
     }
 }

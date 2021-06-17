@@ -1,5 +1,5 @@
 use tokio::net::TcpStream;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use anyhow::{anyhow, Result};
 use crate::net::{
     value_readers::read_varint,
@@ -51,14 +51,18 @@ impl ClientboundPacket {
     {
         match self {
             ClientboundPacket::Response(status) => {
-                PacketBuilder::new(0)
+                let bytes = PacketBuilder::new(0)
                     .add_str(status.as_str())
-                    .write(writer).await
+                    .build();
+                writer.write_all(&bytes).await?;
+                Ok(())
             }
             ClientboundPacket::Pong(time) => {
-                PacketBuilder::new(1)
+                let bytes = PacketBuilder::new(1)
                     .add_bytes(&time.to_be_bytes())
-                    .write(writer).await
+                    .build();
+                writer.write_all(&bytes).await?;
+                Ok(())
             }
         }
         

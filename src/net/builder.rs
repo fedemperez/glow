@@ -1,6 +1,4 @@
-use anyhow::Result;
 use nalgebra::Vector3;
-use tokio::io::{AsyncWrite, AsyncWriteExt};
 use nbt::{Value, to_writer};
 use crate::serialization::push_varint;
 
@@ -57,13 +55,10 @@ impl PacketBuilder {
         self
     }
 
-    pub async fn write<W: AsyncWrite>(&self, writer: &mut W) -> Result<()>
-        where W: Unpin
-    {
+    pub fn build(&self) -> Vec<u8> {
         let mut packet = Vec::with_capacity(self.bytes.len() + 5);
         push_varint(self.bytes.len() as u32, &mut packet);
         packet.extend(self.bytes.iter());
-        writer.write_all(packet.as_slice()).await?;
-        Ok(())
+        packet
     }
 }

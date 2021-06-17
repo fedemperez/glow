@@ -52,7 +52,7 @@ fn send_chunk(sender: &UnboundedSender<ClientboundPacket>,
     coords: ChunkCoords, chunk: Arc<RwLock<ChunkData>>)
 {
     let chunk = chunk.read().unwrap();
-    sender.send(ClientboundPacket::ChunkData{
+    sender.send(ClientboundPacket::ChunkData {
         x: coords.0,
         z: coords.1,
         full: true,
@@ -61,6 +61,21 @@ fn send_chunk(sender: &UnboundedSender<ClientboundPacket>,
         biomes: Some(chunk.get_biome_map()),
         data: chunk.get_data(),
         block_entities: vec![],
+    });
+    let mut sky_arrays = Vec::with_capacity(18);
+    for _ in 0..18 {
+        sky_arrays.push(vec![0xFF; 2048]);
+    }
+    sender.send(ClientboundPacket::UpdateLight {
+        x: coords.0,
+        z: coords.1,
+        trust_edges: true,
+        sky_mask: 0b0011_1111_1111_1111_1111,
+        block_mask: 0,
+        empty_sky_mask: 0,
+        empty_block_mask: 0b0011_1111_1111_1111_1111,
+        sky_light: sky_arrays,
+        block_light: vec![],
     });
 }
 

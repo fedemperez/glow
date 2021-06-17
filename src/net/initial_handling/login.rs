@@ -1,4 +1,4 @@
-use tokio::net::TcpStream;
+use tokio::{io::AsyncWriteExt, net::TcpStream};
 use uuid::Uuid;
 use crate::net::{
     builder::PacketBuilder, 
@@ -50,10 +50,12 @@ impl ClientboundPacket {
     {
         match self {
             ClientboundPacket::Success(uuid, name) => {
-                PacketBuilder::new(0x02)
+                let bytes = PacketBuilder::new(0x02)
                     .add_bytes(uuid.as_bytes())
                     .add_str(name.as_str())
-                    .write(writer).await
+                    .build();
+                writer.write_all(&bytes).await?;
+                Ok(())
             }
         }
     }
