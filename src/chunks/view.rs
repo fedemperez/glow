@@ -1,7 +1,10 @@
 use crate::blocks::Block;
 use nalgebra::{Vector3, vector};
 
-use super::World;
+use super::{
+    World,
+    data::CHUNK_HEIGHT,
+};
 
 #[derive(Clone)]
 pub struct WorldView<'a> {
@@ -29,7 +32,7 @@ impl<'a> WorldView<'a> {
         block: &'static Block) 
     {
         let coords = self.center + vector!(x, y, z);
-        self.world.set_block(&coords, block)
+        self.world.set_block(&coords, block);
     }
 
     pub fn displace(&mut self, dir: Vector3<i32>) {

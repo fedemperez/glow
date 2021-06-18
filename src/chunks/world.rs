@@ -1,6 +1,7 @@
 use crate::blocks::Block;
 use super::WorldView;
 use super::ChunkData;
+use super::data::CHUNK_HEIGHT;
 use crate::util::adjacent_coords;
 use super::chunk::Chunk;
 use super::coords::ChunkCoords;
@@ -129,6 +130,9 @@ impl World {
     }
 
     pub fn get_block(&self, pos: &Vector3<i32>) -> &'static Block {
+        if pos.y < 0 || pos.y >= CHUNK_HEIGHT as i32 {
+            return Block::air();
+        }
         let coords = ChunkCoords::from_block(pos);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
@@ -141,6 +145,9 @@ impl World {
     }
 
     pub fn set_block(&self, pos: &Vector3<i32>, block: &'static Block) {
+        if pos.y < 0 || pos.y >= CHUNK_HEIGHT as i32 {
+            return;
+        }
         let coords = ChunkCoords::from_block(pos);
         let chunk = self.chunks.read().unwrap()
             .get(&coords).cloned();
