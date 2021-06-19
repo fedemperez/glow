@@ -17,7 +17,7 @@ use crate::tags::TAG_PACKET;
 use super::connection::GameConnection;
 use errors::UnknownPacket;
 
-const BRAND: &str = "Cane";
+const BRAND: &str = "Glow";
 const DIM_CODEC: &[u8] = include_bytes!("./dimension_codec.nbt");
 const DIM_NBT: &[u8] = include_bytes!("./dimension.nbt");
 

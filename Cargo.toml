@@ -1,10 +1,8 @@
 [package]
-name = "cane"
+name = "glow"
 version = "0.0.1"
-authors = ["Federico Perez <fedesote17@gmail.com>"]
+authors = ["Federico Perez <fedemperez@protonmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 block_macro = { path = "./src/blocks/block_macro" }
