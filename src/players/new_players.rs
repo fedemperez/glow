@@ -91,7 +91,7 @@ pub fn load_player_data(#[resource] server: &mut Server,
 
 fn gen_new_player() -> PlayerData {
     PlayerData {
-        pos: vector!(0.0, 2.0, 0.0),
+        pos: vector!(0.0, 3.0, 0.0),
         rotation: (0.0, 0.0),
         inventory: Inventory::new(),
     }

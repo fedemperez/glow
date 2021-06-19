@@ -1,6 +1,12 @@
+use std::fs;
 use std::mem::replace;
 use std::sync::{Arc, RwLock, mpsc::{Receiver, Sender, channel}};
 use std::thread::{self, JoinHandle};
+
+use anyhow::anyhow;
+use anvil_region::error::ChunkWriteError;
+use anvil_region::position::{RegionChunkPosition, RegionPosition};
+use anvil_region::provider::{FolderRegionProvider, RegionProvider};
 
 use super::{ChunkCoords, ChunkData};
 
@@ -47,12 +53,31 @@ fn spawn_worker(recv: Receiver<Job>) -> JoinHandle<()> {
 }
 
 fn worker(recv: Receiver<Job>) {
+    fs::create_dir_all("world/region").unwrap();
+    let provider = FolderRegionProvider::new("world/region");
+
     while let Ok(job) = recv.recv() {
-        let Job(coords, data) = job;
-        if let Ok(data) = data.read() {
-            if let Err(err) = data.save(coords) {
+        let Job(coords, chunk) = job;
+        if let Ok(chunk) = chunk.read() {
+            let ChunkCoords(chunk_x, chunk_z) = coords;
+            let region_position = 
+                RegionPosition::from_chunk_position(chunk_x, chunk_z);
+            let region_chunk_position = 
+                RegionChunkPosition::from_chunk_position(chunk_x, chunk_z);
+            let mut region = provider.get_region(region_position).unwrap();
+
+            let chunk_data = chunk.get_save_data(coords);
+
+            if let Err(err) = region.write_chunk(region_chunk_position, 
+                chunk_data)
+            {
+                let err = match err {
+                    ChunkWriteError::LengthExceedsMaximum { length } 
+                    => anyhow!(format!("Too large ({} bytes)", length)),
+                    ChunkWriteError::IOError { io_error } => io_error.into(),
+                };
                 eprintln!("Error saving chunk at ({}, {}): {}", 
-                    coords.0, coords.1, err)
+                    coords.0, coords.1, err);
             }
         };
     }

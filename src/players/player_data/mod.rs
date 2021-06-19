@@ -1,3 +1,6 @@
+use std::fs;
+use std::path::PathBuf;
+
 use anyhow::Result;
 use nalgebra::Vector3;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
@@ -25,13 +28,15 @@ impl PlayerData {
     pub async fn save(&self, uuid: Uuid) -> Result<()> {
         let mut data = vec![];
         nbt::to_gzip_writer(&mut data, self, None)?;
-        write_file(get_path(uuid), data.as_slice()).await?;
+        let path = get_path(uuid);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        write_file(path, data.as_slice()).await?;
         Ok(())
     }
 }
 
-fn get_path(uuid: Uuid) -> String {
-    format!("./world/playerdata/{}.dat", uuid)
+fn get_path(uuid: Uuid) -> PathBuf {
+    PathBuf::from(format!("./world/playerdata/{}.dat", uuid))
 }
 
 fn serialize_rotation<S>(rotation: &(f32, f32), serializer: S) 
