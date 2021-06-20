@@ -44,7 +44,9 @@ fn update_changed(#[resource] world: &mut World) {
 
 #[system]
 fn random_tick(#[resource] world: &mut World) {
-    let chunks = world.chunks.read().unwrap();
+    let chunks: Vec<(ChunkCoords, Chunk)> = world.chunks.read().unwrap()
+        .iter().map(|(coords, chunk)| (*coords, chunk.clone()))
+        .collect();
     chunks.par_iter()
         .for_each(|(coords, chunk)| {
             let center = coords.global(0, 0, 0);
